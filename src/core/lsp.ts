@@ -90,7 +90,7 @@ export async function getFileLineAndCharacterFromFunctionName(
   const wholeFunctionName = memberAccessFunctionName.includes("(")
     ? memberAccessFunctionName
     : memberAccessFunctionName + "(";
-  const simplfiedFunctionName = isFirst
+  const simplfiedFunctionName = isFirst || memberAccessFunction.length > 0
     ? wholeFunctionName.split(",")[0].replace(/^[\s\t]*/g, "")
     : " " + wholeFunctionName.split(",")[0].replace(/^[\s\t]*/g, "");
   const fileContentArray = fileContent.split("\n");
