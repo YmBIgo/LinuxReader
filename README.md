@@ -26,7 +26,7 @@ VSCode拡張としてはまだ公開していません。
 公開し次第、VSCode拡張でのインストール方法を書きます。
 
 #### 用意するもの
-clangd, Linuxのコード, Linuxのcompile_commands.json, vscode  
+clangd(14系以上), Linuxのコード, Linuxのcompile_commands.json, vscode(1.100.0以上)  
 OpenAIかAnthropicかPLaMoのAPIキー
 
 1. Linuxコードベース、clangdの準備
@@ -49,11 +49,17 @@ bear -- make LLVM=1 -j16
 
 3. vscode のインストール
 
+1.100.0 以上をインストールしてください
+
 4. LinuxReader のインストール
 
 ```
 git clone https://github.com/YmBIgo/LinuxReader
 ```
+
+5. VSCode で LinuxReader をダウンロード
+
+***もしくは...***
 
 5. VSCode での LinuxReader のセットアップ
 
@@ -90,3 +96,9 @@ clangdのパス、Linuxのパス、compile_commands.json のディレクトリ�
 しばらくすると、LLMが関数の中から重要な関数を選ぶので、そこから内容を探索したい関数を選択します。  
 すると、またLLMが関数の中から重要な関数を選ぶので、そこから再度探索したい関数を選択します。  
 以上の流れを、自分がいいと思うまで続けます。
+
+## Release Notes
+
+#### 1.0.0
+
+LinuxReaderの最初のリリース

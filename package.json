@@ -1,11 +1,20 @@
 {
   "name": "linux-reader",
   "displayName": "linux-reader",
-  "description": "this extension enable you to read linux code base with llm",
+  "description": " Linux のソースコードをLLMと一緒に効率的に読むための VSCode 拡張",
   "version": "0.0.1",
   "type": "commonjs",
   "engines": {
     "vscode": "^1.100.0"
+  },
+  "author": {
+    "name": "Kazuya Kurihara"
+  },
+  "license": "MIT",
+  "publisher": "coffeecupjapan",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YmBIgo/LinuxReader"
   },
   "categories": [
     "Other"
