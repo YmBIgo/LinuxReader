@@ -20,11 +20,11 @@ Linux Reader とは、LLMと一緒にLinuxのコードを読むためのツー�
 - コードベースを分割せず一括でLLMに調べさせること
 
 ## 利用方法
-VSCode拡張としてはまだ公開していません。
+VSCode拡張としてはまだ公開していません。  
 公開し次第、VSCode拡張でのインストール方法を書きます。
 
 #### 用意するもの
-clangd, Linuxのコード, Linuxのcompile_commands.json, vscode
+clangd, Linuxのコード, Linuxのcompile_commands.json, vscode  
 OpenAIかAnthropicかPLaMoのAPIキー
 
 1. Linuxコードベース、clangdの準備
@@ -71,20 +71,20 @@ npm run compile
 ```
 
 #### 実行する
-まず、右のバーの「Run and debug」を選択
+まず、右のバーの「Run and debug」を選択  
 次に、上に出てきている「Run Extension」を選択すれば、Linux Readerの入ったVsCodeウィンドウを開けます
 
 #### 開く
-前述の「実行する」を実行した後で「Command + Shift + p」でコマンドパレットを開き、「Open Linux Reader in New Tab」をクリック
+前述の「実行する」を実行した後で「Command + Shift + p」でコマンドパレットを開き、「Open Linux Reader in New Tab」をクリック  
 クリック後に、右側にタブウィンドウが出てくれば成功です
 
-5. 設定の入力
+6. 設定の入力
 clangdのパス、Linuxのパス、compile_commands.json のディレクトリのパス、LLM（OpenAI・Claude・Plamo）を入力
 
-6. チャット画面で探索を開始
+7. チャット画面で探索を開始
 最初に、「探索を開始するファイルパス」「探索を開始する関数」「探索の目的」を入力すれば、探索を開始できます。
 
-7. 探索を制御
-しばらくすると、LLMが関数の中から重要な関数を選ぶので、そこから内容を探索したい関数を選択します。
-すると、またLLMが関数の中から重要な関数を選ぶので、そこから再度探索したい関数を選択します。
+8. 探索を制御
+しばらくすると、LLMが関数の中から重要な関数を選ぶので、そこから内容を探索したい関数を選択します。  
+すると、またLLMが関数の中から重要な関数を選ぶので、そこから再度探索したい関数を選択します。  
 以上の流れを、自分がいいと思うまで続けます。
