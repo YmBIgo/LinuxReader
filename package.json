@@ -4,7 +4,7 @@
   "description": " Linux のソースコードをLLMと一緒に効率的に読むための VSCode 拡張",
   "version": "1.0.1",
   "type": "commonjs",
-  "icon": "icon.png",
+  "icon": "logo.png",
   "engines": {
     "vscode": "^1.100.0"
   },
