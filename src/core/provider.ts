@@ -31,7 +31,7 @@ export class LinuxLLMReaderProvider implements vscode.WebviewViewProvider {
   constructor(private readonly context: vscode.ExtensionContext) {}
 
   async init() {
-    linuxReaderAssitant?.doGC();
+    await linuxReaderAssitant?.doGC();
     linuxReaderAssitant = new LinuxReader(
       this.ask,
       this.say,

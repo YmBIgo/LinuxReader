@@ -13,7 +13,7 @@ export async function getFunctionContentFromLineAndCharacter(filePath: string, l
     const fileContentStart = fileContentSplit.slice(line);
     const failSafeFileContent = fileContentSplit.slice(line, line + 20).join("\n");
     if (!failSafeFileContent.includes("{")) {
-        return failSafeFileContent;
+        return fileContentSplit.slice(line, line + 5).join("\n");
     }
     let fileResultArray = [];
     let startArrowCount = 0;

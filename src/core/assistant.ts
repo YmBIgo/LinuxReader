@@ -149,19 +149,30 @@ export class LinuxReader {
       },
       revealOutputChannelOn: vscodelc.RevealOutputChannelOn.Never,
     };
-    client = new ClangdLanguageClient(
-      `Linux Reader`,
-      serverOptions,
-      clientOptions
-    );
-    await client
-      ?.start()
-      .then(() => {
-        console.log("client starting");
-      })
-      .catch(() => {
-        console.error("client failed to start...");
-      });
+    if (client) {
+      await client
+        ?.restart()
+        .then(() => {
+          console.log("client restarting");
+        })
+        .catch(() => {
+          console.error("client failed to start...");
+        });
+    } else {
+      client = new ClangdLanguageClient(
+        `Linux Reader`,
+        serverOptions,
+        clientOptions
+      );
+      await client
+        ?.start()
+        .then(() => {
+          console.log("client starting");
+        })
+        .catch(() => {
+          console.error("client failed to start...");
+        });
+    }
     console.log("init finished! with status", client.state);
   }
 
@@ -232,9 +243,6 @@ ${functionContent}
       const response =
         (await this.apiHandler?.createMessage(pickCandidatePromopt, history)) ??
         "{}";
-      const commentRemovedResponse = response
-        .replace("```json", "")
-        .replace(/```^/g, "");
       responseJSON = JSON.parse(response);
     } catch (e) {
       console.error(e);
@@ -639,7 +647,7 @@ ${description ? description : "not provided..."}
     return client?.state === vscodelc.State.Running;
   }
 
-  doGC() {
+  async doGC() {
     this.rootPath = "";
     this.rootLine = -1;
     this.rootCharacter = -1;
