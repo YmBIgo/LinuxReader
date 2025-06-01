@@ -59,7 +59,15 @@ git clone https://github.com/YmBIgo/LinuxReader
 
 5. VSCode で LinuxReader をダウンロード
 
-***もしくは...***
+https://marketplace.visualstudio.com/items?itemName=coffeecupjapan.linux-reader&ssr=false#overview
+
+#### 開く
+ダウンロード完了したら、「Command + Shift + p」でコマンドパレットを開き、「Open Linux in New Tab」をクリック  
+クリック後に、右側にタブウィンドウが出てくれば成功です
+
+<details>
+
+<summary>***もしくは、ローカルで試したい場合は...***</summary>
 
 5. VSCode での LinuxReader のセットアップ
 
@@ -83,8 +91,10 @@ npm run compile
 次に、上に出てきている「Run Extension」を選択すれば、Linux Readerの入ったVsCodeウィンドウを開けます
 
 #### 開く
-前述の「実行する」を実行した後で「Command + Shift + p」でコマンドパレットを開き、「Open Linux Reader in New Tab」をクリック  
+前述の「実行する」を実行した後で「Command + Shift + p」でコマンドパレットを開き、「Open Linux in New Tab」をクリック  
 クリック後に、右側にタブウィンドウが出てくれば成功です
+
+</details>
 
 6. 設定の入力
 clangdのパス、Linuxのパス、compile_commands.json のディレクトリのパス、LLM（OpenAI・Claude・Plamo）を入力
