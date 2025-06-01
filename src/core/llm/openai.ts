@@ -17,7 +17,8 @@ export class OpenAIHandler implements LLMModel {
   }
   async createMessage(
     systemPrompt: string,
-    messages: MessageParam[]
+    messages: MessageParam[],
+    isJSON: boolean
   ): Promise<string> {
     const openAIMessages = covertAnthropicMessageToOpenAiMessage(
       systemPrompt,
@@ -30,11 +31,13 @@ export class OpenAIHandler implements LLMModel {
         max_completion_tokens: 8192,
       });
       this.attemptCount = 0;
-      JSON.parse(
-        response.choices[0].message.content
-          ?.replace("```json", "")
-          .replace(/```/g, "") ?? "unknown"
-      );
+      if (isJSON) {
+        JSON.parse(
+          response.choices[0].message.content
+            ?.replace("```json", "")
+            .replace(/```/g, "") ?? "unknown"
+        );
+      }
       return (
         response.choices[0].message.content
           ?.replace("```json", "")
@@ -46,7 +49,7 @@ export class OpenAIHandler implements LLMModel {
       if (this.attemptCount >= MAX_RETRY) {
         throw new Error("fail to get api openai response");
       }
-      return this.createMessage(systemPrompt, messages);
+      return this.createMessage(systemPrompt, messages, isJSON);
     }
   }
   getModel(): string {

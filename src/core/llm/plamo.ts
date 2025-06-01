@@ -1,7 +1,7 @@
 import { MessageParam } from "@anthropic-ai/sdk/resources/messages";
 import { LLMModel } from "./model";
 
-const MAX_RETRY = 3;
+const MAX_RETRY = 5; // PLaMoは調子が悪い
 
 export class PlamoHanlder implements LLMModel {
   private modelName: string = "PLaMo";
@@ -13,7 +13,8 @@ export class PlamoHanlder implements LLMModel {
   }
   async createMessage(
     systemPrompt: string,
-    messages: MessageParam[]
+    messages: MessageParam[],
+    isJSON: boolean
   ): Promise<string> {
     const tranformedMessages = [
       {
@@ -41,11 +42,13 @@ export class PlamoHanlder implements LLMModel {
         }
       );
       const result = (await response.json()) as any;
-      JSON.parse(
-        result.choices[0].message.content
-          .replace("```json", "")
-          .replace(/```/g, "")
-      );
+      if (isJSON) {
+        JSON.parse(
+          result.choices[0].message.content
+            .replace("```json", "")
+            .replace(/```/g, "")
+        );
+      }
       return (
         result.choices[0].message.content
           .replace("```json", "")
@@ -57,7 +60,7 @@ export class PlamoHanlder implements LLMModel {
       if (this.attemptCount >= MAX_RETRY) {
         throw new Error("fail to get api openai response");
       }
-      return this.createMessage(systemPrompt, messages);
+      return this.createMessage(systemPrompt, messages, isJSON);
     }
   }
   getModel(): string {

@@ -14,7 +14,8 @@ export class AnthropicHandler implements LLMModel {
   }
   async createMessage(
     systemPrompt: string,
-    history: Anthropic.Messages.MessageParam[]
+    history: Anthropic.Messages.MessageParam[],
+    isJSON: boolean
   ): Promise<string> {
     try {
       const response = await this.client.messages.create({
@@ -25,9 +26,11 @@ export class AnthropicHandler implements LLMModel {
       });
       const type = response.content[0].type;
       if (type === "text") {
-        JSON.parse(
-          response.content[0].text.replace("```json", "").replace(/```/g, "")
-        );
+        if (isJSON) {
+          JSON.parse(
+            response.content[0].text.replace("```json", "").replace(/```/g, "")
+          );
+        }
         return response.content[0].text
           .replace("```json", "")
           .replace(/```/g, "");
@@ -43,7 +46,7 @@ export class AnthropicHandler implements LLMModel {
       if (this.attemptCount >= MAX_RETRY) {
         throw new Error("fail to get api anthropic response");
       }
-      return this.createMessage(systemPrompt, history);
+      return this.createMessage(systemPrompt, history, isJSON);
     }
   }
   getModel() {

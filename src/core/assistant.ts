@@ -242,7 +242,7 @@ ${functionContent}
     let responseJSON: string;
     try {
       const response =
-        (await this.apiHandler?.createMessage(pickCandidatePromopt, history)) ??
+        (await this.apiHandler?.createMessage(pickCandidatePromopt, history, true)) ??
         "{}";
       responseJSON = JSON.parse(response);
     } catch (e) {
@@ -502,7 +502,7 @@ ${result}`;
       { role: "user", content: userPrompt },
     ];
     const response =
-      (await this.apiHandler?.createMessage(pickCandidatePromopt, history)) ||
+      (await this.apiHandler?.createMessage(pickCandidatePromopt, history, false)) ||
       "failed to get result";
     const res = response + "\n\n - Details \n\n" + result;
     const fileName = `report_${Date.now()}.txt`;
@@ -521,7 +521,7 @@ ${functionContent}
       { role: "user", content: userPrompt },
     ];
     const response =
-      (await this.apiHandler?.createMessage(mermaidPrompt, history)) ||
+      (await this.apiHandler?.createMessage(mermaidPrompt, history, false)) ||
       "failed to get result";
     this.saySocket(`Generate Mermaid diagram. Done!`);
     this.mermaidSocket(response);
@@ -546,7 +546,7 @@ ${description ? description : "not provided..."}
       { role: "user", content: userPrompt },
     ];
     const response =
-      (await this.apiHandler?.createMessage(bugFixPrompt, history)) ||
+      (await this.apiHandler?.createMessage(bugFixPrompt, history, false)) ||
       "failed to get result";
     this.saySocket("Generate Bugs Report. Done!");
     this.saySocket(response);

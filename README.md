@@ -1,6 +1,8 @@
 ## Linux Reader とは？
 Linux Reader とは、LLMと一緒にLinuxのコードを読むためのツールです。
 
+[\[LinuxReaderデモ\](https://youtu.be/jT_mHFuKsdQ)](https://youtu.be/jT_mHFuKsdQ)
+
 #### [できること]
 - 人がコードを読まずともLLMが関数探索してくれる
 - 前に進んだ関数経路に戻れる

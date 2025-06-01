@@ -5,6 +5,7 @@ import VscodeTextfield from "@vscode-elements/react-elements/dist/components/Vsc
 import Mermaid from "../components/Mermaid";
 import VscodeIcon from "@vscode-elements/react-elements/dist/components/VscodeIcon";
 import { vscode } from "../utils/vscode";
+import { VscodeProgressRing } from "@vscode-elements/react-elements";
 
 type ChatViewType = {
   messages: Message[];
@@ -190,8 +191,8 @@ const ChatView: React.FC<ChatViewType> = ({ messages, setMessages, setIsSettingP
         style={{
           width: "310px",
           padding: "10px",
-          margin: "50px 0 50px",
-          height: "calc(100vh - 220px)",
+          margin: "150px 0 50px",
+          height: "calc(100vh - 320px)",
         }}
       >
         <div
@@ -268,6 +269,11 @@ const ChatView: React.FC<ChatViewType> = ({ messages, setMessages, setIsSettingP
             </div>
           )
         )}
+        {inputPhase === 5 || messages.length === 0
+        ?
+          <VscodeProgressRing style={{width: "50px", height: "50px", textAlign: "center"}}/>
+        : <></>
+        }
         <div
           style={{
             padding: "10px",

@@ -87,10 +87,12 @@ export async function getFileLineAndCharacterFromFunctionName(
   const memberAccessFunction = functionName.split("->");
   const memberAccessFunctionName =
     memberAccessFunction[memberAccessFunction.length - 1];
-  const wholeFunctionName = memberAccessFunctionName.includes("(")
-    ? memberAccessFunctionName
-    : memberAccessFunctionName + "(";
-  const simplfiedFunctionName = isFirst || memberAccessFunction.length > 0
+  const wholeFunctionName = !memberAccessFunctionName.includes("(") && memberAccessFunction.length === 1
+    ? memberAccessFunctionName + "("
+    : memberAccessFunction.length > 1
+    ? memberAccessFunctionName + ")"
+    : memberAccessFunctionName;
+  const simplfiedFunctionName = isFirst || memberAccessFunction.length > 1
     ? wholeFunctionName.split(",")[0].replace(/^[\s\t]*/g, "")
     : " " + wholeFunctionName.split(",")[0].replace(/^[\s\t]*/g, "");
   const fileContentArray = fileContent.split("\n");
