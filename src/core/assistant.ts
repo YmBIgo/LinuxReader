@@ -186,7 +186,8 @@ export class LinuxReader {
       await getFileLineAndCharacterFromFunctionName(
         currentFilePath,
         currentFunctionName,
-        currentFunctionName
+        currentFunctionName,
+        true
       );
     if (currentLine === -1 && currentCharacter === -1) {
       this.sendErrorSocket(
@@ -431,7 +432,7 @@ ${functionContent}
         continue;
       }
     }
-    if (isNaN(resultNumber)) {
+    if (isNaN(resultNumber) || resultNumber > 999999) {
       this.runHistoryPoint(result.ask);
       return;
     }
@@ -451,7 +452,8 @@ ${functionContent}
       await getFileLineAndCharacterFromFunctionName(
         currentFilePath,
         responseJSON[resultNumber].code_line,
-        responseJSON[resultNumber].name
+        responseJSON[resultNumber].name,
+        false
       );
     if (searchLine === -1 && searchCharacter === -1) {
       this.sendErrorSocket(`Error occurs while trying to search file content.`);
