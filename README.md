@@ -112,3 +112,7 @@ clangdのパス、Linuxのパス、compile_commands.json のディレクトリ�
 #### 1.0.0
 
 LinuxReaderの最初のリリース
+
+#### 1.0.2
+
+履歴保存・履歴から再検索の機能を追加
