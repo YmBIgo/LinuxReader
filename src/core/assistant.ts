@@ -6,7 +6,7 @@ import {
   addFilePrefixToFilePath,
   removeFilePrefixFromFilePath,
 } from "./util/filepath";
-import { HistoryHandler, ProcessChoice } from "./history";
+import { ChoiceTree, HistoryHandler, ProcessChoice } from "./history";
 import { LLMModel } from "./llm/model";
 import { Message, MessageType } from "./type/Message";
 import {
@@ -58,6 +58,7 @@ export class LinuxReader {
   private rootPath: string = "";
   private rootLine: number = -1;
   private rootCharacter: number = -1;
+  private rootFunctionName: string = "";
   private purpose: string = "";
 
   private saySocket: (content: string) => void;
@@ -176,12 +177,56 @@ export class LinuxReader {
     console.log("init finished! with status", client.state);
   }
 
+  async runFirstTaskWithHistory(
+    currentFilePath: string,
+    currentFunctionName: string,
+    purpose: string,
+    choiceTree: ChoiceTree
+  ) {
+    this.rootPath = currentFilePath;
+    this.rootFunctionName = currentFunctionName;
+    const [currentLine, currentCharacter] =
+      await getFileLineAndCharacterFromFunctionName(
+        currentFilePath,
+        currentFunctionName,
+        currentFunctionName,
+        true
+      );
+    if (currentLine === -1 && currentCharacter === -1) {
+      this.sendErrorSocket(
+        `以下の内容は見つかりませんでした ${currentFunctionName} @ ${currentFilePath}...`
+      );
+    }
+    this.rootLine = currentLine;
+    this.rootCharacter = currentCharacter;
+    this.purpose = purpose;
+    this.historyHanlder = new HistoryHandler(
+      this.rootPath,
+      currentFunctionName,
+      currentFunctionName
+    );
+    this.historyHanlder.overWriteChoiceTree(choiceTree);
+    const historyTree = this.historyHanlder.showHistory();
+    if (historyTree) {
+      this.saySocket(historyTree);
+    }
+    const question = "過去の履歴の中から検索したいハッシュ値を入力してください。末端のノードからは検索できません";
+    const result = await this.askSocket(question);
+    const resultNumber = parseInt(result.ask);
+    if (isNaN(resultNumber) || resultNumber > 999999) {
+      this.runHistoryPoint(result.ask);
+      return;
+    }
+    this.sendErrorSocket("ハッシュ値が見つかりませんでした。再度閉じて再試行してください");
+  }
+
   async runFirstTask(
     currentFilePath: string,
     currentFunctionName: string,
     purpose: string
   ) {
     this.rootPath = currentFilePath;
+    this.rootFunctionName = currentFunctionName;
     const [currentLine, currentCharacter] =
       await getFileLineAndCharacterFromFunctionName(
         currentFilePath,
@@ -242,17 +287,22 @@ ${functionContent}
     let responseJSON: string;
     try {
       const response =
-        (await this.apiHandler?.createMessage(pickCandidatePromopt, history, true)) ??
-        "{}";
+        (await this.apiHandler?.createMessage(
+          pickCandidatePromopt,
+          history,
+          true
+        )) ?? "{}";
       responseJSON = JSON.parse(response);
     } catch (e) {
       console.error(e);
       this.sendErrorSocket(`APIエラー`);
+      this.saveChoiceTree();
       return;
     }
     if (!Array.isArray(responseJSON)) {
       console.error("respond JSON format is not Array...");
       this.sendErrorSocket(`返ってきた情報が間違っています...`);
+      this.saveChoiceTree();
       return;
     }
     // TODO : 正確な型をつける
@@ -367,6 +417,7 @@ ${functionContent}
   - 8 を入力すると現在のファイルを表示します
   - 9 を入力すると現在の関数のマーメイド図を生成します
   - 10 を入力すると疑わしいバグを検出します
+  - 11 を入力するとここまでの履歴をJSONで保存します
 ※ 文字列を入力すると、過去の履歴を検索するハッシュ値として認識されます`);
       console.log(`result : ${result.ask}`);
       resultNumber = Number(result.ask);
@@ -430,6 +481,9 @@ ${functionContent}
       } else if (resultNumber === 10) {
         await this.getBugsReport();
         continue;
+      } else if (resultNumber === 11) {
+        this.saveChoiceTree();
+        continue;
       }
     }
     if (isNaN(resultNumber) || resultNumber > 999999) {
@@ -441,12 +495,14 @@ ${functionContent}
       return;
     }
     if (!responseJSON[resultNumber]) {
-      this.sendErrorSocket(`Your Choice ${resultNumber} is not valid number.`);
+      this.sendErrorSocket(
+        `あなたの選択肢 ${resultNumber} は正しい選択肢ではありません`
+      );
       return;
     }
     this.historyHanlder?.addHistory(newHistoryChoices);
     this.saySocket(
-      `Clangd is Seacrhing for ${responseJSON[resultNumber].name}`
+      `Clangdは "${responseJSON[resultNumber].name}" を検索しています`
     );
     const [searchLine, searchCharacter] =
       await getFileLineAndCharacterFromFunctionName(
@@ -456,19 +512,21 @@ ${functionContent}
         false
       );
     if (searchLine === -1 && searchCharacter === -1) {
-      this.sendErrorSocket(`Error occurs while trying to search file content.`);
+      this.sendErrorSocket(`ファイルの内容の検索中に失敗しました`);
+      this.saveChoiceTree();
       return;
     }
     const [newFile, newLine, newCharacter, newFunctionContent] =
       await this.queryClangd(currentFilePath, searchLine, searchCharacter);
     if (!newFile) {
-      console.error("Clangd failed to search file...");
-      this.sendErrorSocket("Clangd failed to search file...");
+      console.error("Clangd はファイルの検索に失敗しました");
+      this.sendErrorSocket("Clangd はファイルの検索に失敗しました");
+      this.saveChoiceTree();
       return;
     }
     this.historyHanlder?.choose(resultNumber, newFunctionContent);
     this.saySocket(
-      `LLM is searching content in ${newFile}@${newLine}:${newCharacter}`
+      `LLMは ${newFile}@${newLine}:${newCharacter} を検索しています`
     );
     this.runTask(removeFilePrefixFromFilePath(newFile), newFunctionContent);
   }
@@ -477,8 +535,9 @@ ${functionContent}
     const newRunConfig = this.historyHanlder?.moveById(historyHash);
     if (!newRunConfig) {
       this.sendErrorSocket(
-        `Can not jump to selected history hash ${historyHash}`
+        `指定された検索履歴のhash値が見つかりませんでした ${historyHash}`
       );
+      this.saveChoiceTree();
       return;
     }
     const { functionCodeLine, originalFilePath } = newRunConfig;
@@ -488,7 +547,7 @@ ${functionContent}
   private async getReport() {
     const r = this.historyHanlder?.traceFunctionContent();
     if (!r) {
-      this.sendErrorSocket(`Fail to get report...`);
+      this.sendErrorSocket(`レポート取得に失敗しました`);
       return;
     }
     const [result, functionResult] = r;
@@ -502,8 +561,11 @@ ${result}`;
       { role: "user", content: userPrompt },
     ];
     const response =
-      (await this.apiHandler?.createMessage(pickCandidatePromopt, history, false)) ||
-      "failed to get result";
+      (await this.apiHandler?.createMessage(
+        pickCandidatePromopt,
+        history,
+        false
+      )) || "failed to get result";
     const res = response + "\n\n - Details \n\n" + result;
     const fileName = `report_${Date.now()}.txt`;
     await fs.writeFile(`${this.saveReportFolder}/${fileName}`, res);
@@ -528,15 +590,15 @@ ${functionContent}
   }
   private async getBugsReport() {
     const description = await this.askSocket(
-      `If you have suspicious behavior related to code you are reading, please descibe it \n(If you don't have just enter "no")`
+      `読んでいるコードと関連する怪しい挙動があるなら書いてください（無ければnoと書いてください）`
     );
     const r = this.historyHanlder?.traceFunctionContent();
     if (!r) {
-      this.sendErrorSocket(`Fail to get report...`);
+      this.sendErrorSocket(`バグレポート取得に失敗しました...`);
       return;
     }
     const [result, functionResult] = r;
-    this.saySocket(`Start finding bugs related to "${functionResult}"`);
+    this.saySocket(`"${functionResult}"と関連するバグを探しています`);
     const userPrompt = `<functions or methods>
 ${result}
 <the suspicious behavior (optional)>
@@ -551,6 +613,26 @@ ${description ? description : "not provided..."}
     this.saySocket("Generate Bugs Report. Done!");
     this.saySocket(response);
   }
+  private async saveChoiceTree() {
+    const choiceTreeWithAdditionalInfo = {
+      ...this.historyHanlder?.getChoiceTree(),
+      purpose: this.purpose,
+      rootPath: this.rootPath,
+      rootFunctionName: this.rootFunctionName
+    };
+    const choiceTreeString = JSON.stringify(choiceTreeWithAdditionalInfo);
+    if (!choiceTreeString) {
+      return;
+    }
+    const fileName = `choices_${Date.now()}.json`;
+    await fs.writeFile(
+      `${this.saveReportFolder}/${fileName}`,
+      choiceTreeString
+    );
+    this.saySocket(
+      `ここまでの調査履歴が "${this.saveReportFolder}/${fileName}" に保存されました`
+    );
+  }
 
   private async doQueryClangd(
     filePath: string,
@@ -562,7 +644,7 @@ ${description ? description : "not provided..."}
     let itemString: string = "";
     const fileContent = await fs.readFile(filePath, "utf-8");
     await pWaitFor(() => !!this.isClangdRunning(), {
-      interval: 500
+      interval: 500,
     });
     await client?.sendNotification("textDocument/didOpen", {
       textDocument: {
@@ -590,6 +672,7 @@ ${description ? description : "not provided..."}
       item = JSON.parse(itemString as any);
     } catch (e) {
       console.error(e);
+      this.saveChoiceTree();
     }
     if (!Array.isArray(item) || item.length <= 0) {
       console.log("item not array", item);

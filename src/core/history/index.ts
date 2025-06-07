@@ -12,7 +12,7 @@ export type ProcessChoice = {
     functionCodeLine: string;
     originalFilePath: string;
 }
-type ChoiceTree = {
+export type ChoiceTree = {
     content: Choice
     children: ChoiceTree[]
 }
@@ -42,6 +42,9 @@ export class HistoryHandler {
         };
         this.currentChoicePosition = [{depth: 0, width: 0}];
         this.visualizeResult = "";
+    }
+    overWriteChoiceTree(choiceTree: ChoiceTree) {
+        this.choiceTree = choiceTree;
     }
     addHistory(choices: ProcessChoice[]) {
         console.log("choice pos", this.currentChoicePosition);
@@ -185,5 +188,8 @@ ${functionCode}
             currentDepth += 1;
         }
         return [result, functionResult];
+    }
+    getChoiceTree() {
+        return this.choiceTree;
     }
 }

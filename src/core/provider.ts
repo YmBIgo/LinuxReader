@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import fs from "fs/promises"
 
 import { LinuxReader } from "./assistant";
 import { Message } from "./type/Message";
@@ -14,6 +15,7 @@ export class LinuxLLMReaderProvider implements vscode.WebviewViewProvider {
   private disposables: vscode.Disposable[] = [];
   private allowedMessageType = [
     "Init",
+    "InitHistory",
     "Ask",
     "Clangd",
     "LinuxPath",
@@ -151,6 +153,24 @@ export class LinuxLLMReaderProvider implements vscode.WebviewViewProvider {
             rootFunctionName,
             purpose
           );
+          break;
+        case "InitHistory":
+          try {
+            const history = await fs.readFile(message.historyPath, "utf-8");
+            const historyJSON = JSON.parse(history);
+            const rootPath = historyJSON.rootPath;
+            const rootFunctionName = historyJSON.rootFunctionName;
+            const purpose = historyJSON.purpose;
+            const fixedHistoryJSON = {
+              content: historyJSON.content,
+              children: historyJSON.children
+            }
+            // 残るのは choiceTree
+            console.log("History Task Start", rootPath, purpose);
+            linuxReaderAssitant?.runFirstTaskWithHistory(rootPath, rootFunctionName, purpose, fixedHistoryJSON);
+          } catch(e) {
+            console.error(e);
+          }
           break;
         case "Ask":
           const askResponse = message.askResponse;

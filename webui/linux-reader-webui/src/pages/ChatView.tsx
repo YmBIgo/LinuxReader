@@ -13,20 +13,40 @@ type ChatViewType = {
   setIsSettingPage: Dispatch<SetStateAction<boolean>>;
 };
 
-const INPUT_PHASE_NUMBER = [0, 1, 2];
-const BACK_PHASE_NUMBER = [1, 2, 3];
+const INPUT_PHASE_NUMBER = [0, 1, 2, 6];
+const BACK_PHASE_NUMBER = [1, 2, 3, 6, 7];
+const SHOW_HISTORY_NUMBER = [0, 1, 2];
 const INPUT_PHASE_TEXT = [
-  "「検索したいファイルパス」を入力してください",
-  "次は「検索したい関数名の１行」を入力してください",
-  "次は「目的」を入力してください",
-  "タスクを開始する場合は、下の「タスクを開始する」ボタンを押してください",
+  "「検索したいファイルパス」を入力してください", // 0
+  "次は「検索したい関数名の１行」を入力してください", // 1
+  "次は「目的」を入力してください", // 2
+  "タスクを開始する場合は、下の「タスクを開始する」ボタンを押してください", // 3
+  "", // 4
+  "", // 5
+  "検索を開始する履歴JSONのファイルパスを入力してください", // 6
+  "タスクを開始する場合は、下の「タスクを開始する」ボタンを押してください", // 7
 ];
 
-const ChatView: React.FC<ChatViewType> = ({ messages, setMessages, setIsSettingPage }) => {
-  const [inputPhase, setInputPhase] = useState<0 | 1 | 2 | 3 | 4 | 5>(0);
+const ChatView: React.FC<ChatViewType> = ({
+  messages,
+  setMessages,
+  setIsSettingPage,
+}) => {
+  // 0はrootPath入力
+  // 1はrootFunctionName入力
+  // 2は目的入力
+  // 3は確認
+  // 4は入力画面
+  // 5はdisable中
+  // 6はhistory入力中
+  // 7はhistory確認
+  const [inputPhase, setInputPhase] = useState<0 | 1 | 2 | 3 | 4 | 5 | 6 | 7>(
+    0
+  );
   const [rootPath, setRootPath] = useState<string>("");
-  const [rootFunctionName, setRootFunctionName] = useState("");
-  const [purpose, setPurpose] = useState("");
+  const [rootFunctionName, setRootFunctionName] = useState<string>("");
+  const [purpose, setPurpose] = useState<string>("");
+  const [historyPath, setHistoryPath] = useState<string>("");
   const task =
     rootPath && rootFunctionName && purpose
       ? `検索したいファイルパス : ${rootPath}
@@ -49,6 +69,10 @@ const ChatView: React.FC<ChatViewType> = ({ messages, setMessages, setIsSettingP
       ? "選択する"
       : inputPhase === 5
       ? "　"
+      : inputPhase === 6
+      ? "入力する履歴のファイルパスを入力"
+      : inputPhase === 7
+      ? "タスクを開始する"
       : "不明なコマンド";
 
   const secondaryButtonText =
@@ -64,6 +88,10 @@ const ChatView: React.FC<ChatViewType> = ({ messages, setMessages, setIsSettingP
       ? "キャンセルする"
       : inputPhase === 5
       ? "　"
+      : inputPhase === 6
+      ? "通常入力に戻る"
+      : inputPhase === 7
+      ? "戻る"
       : "不明なコマンド";
 
   const handleSecondaryButtonClick = () => {
@@ -74,6 +102,20 @@ const ChatView: React.FC<ChatViewType> = ({ messages, setMessages, setIsSettingP
         setPurpose("");
       } else if (inputPhase === 3) {
         // skip
+      } else if (inputPhase === 6) {
+        setMessages((m) => [
+          ...m,
+          {
+            type: "say",
+            content: INPUT_PHASE_TEXT[0],
+            time: Date.now() + 100,
+          },
+        ]);
+        setInputText("");
+        setInputPhase(0);
+        return;
+      } else if (inputPhase === 7) {
+        setHistoryPath("");
       }
       setMessages((m) => [
         ...m,
@@ -98,6 +140,8 @@ const ChatView: React.FC<ChatViewType> = ({ messages, setMessages, setIsSettingP
         setRootFunctionName(inputText);
       } else if (inputPhase === 2) {
         setPurpose(inputText);
+      } else if (inputPhase === 6) {
+        setHistoryPath(inputText);
       }
       setMessages((m) => [
         ...m,
@@ -115,7 +159,7 @@ const ChatView: React.FC<ChatViewType> = ({ messages, setMessages, setIsSettingP
       setInputText("");
       setInputPhase((ip) => {
         const newphase = ip + 1;
-        if (newphase < 6 && newphase >= 0) return newphase as 0 | 1 | 2 | 3;
+        if (newphase < 8 && newphase >= 0) return newphase as 0 | 1 | 2 | 3 | 7;
         return ip;
       });
     } else if (inputPhase === 3) {
@@ -126,7 +170,7 @@ const ChatView: React.FC<ChatViewType> = ({ messages, setMessages, setIsSettingP
         rootFunctionName,
         purpose,
       });
-      setInputPhase(4);
+      setInputPhase(5);
     } else if (inputPhase === 4) {
       if (!inputText.trim()) {
         return;
@@ -136,7 +180,34 @@ const ChatView: React.FC<ChatViewType> = ({ messages, setMessages, setIsSettingP
         askResponse: inputText.trim(),
       });
       setInputPhase(5);
+    } else if (inputPhase === 7) {
+      setMessages([]);
+      vscode.postMessage({
+        type: "InitHistory",
+        historyPath,
+      });
+      setInputPhase(5);
     }
+  };
+
+  const gotoHistoryPhase = () => {
+    setRootPath("");
+    setRootFunctionName("");
+    setPurpose("");
+    setMessages((m) => [
+      ...m,
+      {
+        type: "user",
+        content: "履歴から入力",
+        time: Date.now(),
+      },
+      {
+        type: "say",
+        content: INPUT_PHASE_TEXT[6],
+        time: Date.now() + 100,
+      },
+    ]);
+    setInputPhase(6);
   };
 
   useEffect(() => {
@@ -181,8 +252,10 @@ const ChatView: React.FC<ChatViewType> = ({ messages, setMessages, setIsSettingP
           {task}
           <hr />
           まだ設定が完了していなかったら設定を完了させてください
-          <br/>
-          <VscodeButton onClick={() => setIsSettingPage(true)}>設定画面</VscodeButton>
+          <br />
+          <VscodeButton onClick={() => setIsSettingPage(true)}>
+            設定画面
+          </VscodeButton>
           <br />
         </p>
       </div>
@@ -269,11 +342,13 @@ const ChatView: React.FC<ChatViewType> = ({ messages, setMessages, setIsSettingP
             </div>
           )
         )}
-        {inputPhase === 5 || messages.length === 0
-        ?
-          <VscodeProgressRing style={{width: "50px", height: "50px", textAlign: "center"}}/>
-        : <></>
-        }
+        {inputPhase === 5 || messages.length === 0 ? (
+          <VscodeProgressRing
+            style={{ width: "50px", height: "50px", textAlign: "center" }}
+          />
+        ) : (
+          <></>
+        )}
         <div
           style={{
             padding: "10px",
@@ -283,6 +358,27 @@ const ChatView: React.FC<ChatViewType> = ({ messages, setMessages, setIsSettingP
           }}
         ></div>
       </div>
+      {SHOW_HISTORY_NUMBER.includes(inputPhase) && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: "100px",
+            left: "0px",
+            backgroundColor: "#00000070",
+            height: "45px",
+            width: "350px",
+            paddingTop: "10px",
+            paddingLeft: "10px",
+          }}
+        >
+          <VscodeButton
+            onClick={gotoHistoryPhase}
+            style={{ width: "330px", margin: "5px 10px" }}
+          >
+            検索履歴入力に移動する
+          </VscodeButton>
+        </div>
+      )}
       <div
         style={{
           position: "fixed",
