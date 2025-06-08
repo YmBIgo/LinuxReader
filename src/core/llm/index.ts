@@ -1,8 +1,9 @@
 import { AnthropicHandler } from "./anthropic";
+import { GeminiHandler } from "./gemini";
 import { OpenAIHandler } from "./openai";
 import { PlamoHanlder } from "./plamo";
 
-export type LLMName = "anthropic" | "openai" | "plamo"
+export type LLMName = "anthropic" | "openai" | "plamo" | "gemini"
 
 export function buildLLMHanlder(llmName: LLMName, modelName: string, apiKey: string) {
     switch(llmName){
@@ -12,6 +13,8 @@ export function buildLLMHanlder(llmName: LLMName, modelName: string, apiKey: str
             return new OpenAIHandler(modelName, apiKey);
         case "plamo":
             return new PlamoHanlder(apiKey);
+        case "gemini":
+            return new GeminiHandler(modelName, apiKey);
         default:
             return null;
     }

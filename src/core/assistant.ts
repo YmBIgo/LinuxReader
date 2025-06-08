@@ -77,11 +77,18 @@ export class LinuxReader {
     sendError: (content: string) => void,
     sendState: (messages: Message[]) => void,
     llmName: LLMName,
+    // openai
     openAIModel: string,
     openAIApiKey: string,
+    // anthropic
     anthropicModel: string,
     anthropicApiKey: string,
+    // plamo
     plamoApiKey: string,
+    // gemini
+    geminiModel: string,
+    geminiApiKey: string,
+    // clangd
     clangdPath: string,
     linuxPath: string,
     compileCommandPath: string,
@@ -112,6 +119,8 @@ export class LinuxReader {
         ? openAIModel
         : llmName === "anthropic"
         ? anthropicModel
+        : llmName === "gemini"
+        ? geminiModel
         : "";
     const apiKey =
       llmName === "openai"
@@ -120,6 +129,8 @@ export class LinuxReader {
         ? anthropicApiKey
         : llmName === "plamo"
         ? plamoApiKey
+        : llmName === "gemini"
+        ? geminiApiKey
         : "unknown llm name";
     this.apiHandler = buildLLMHanlder(llmName, modelType, apiKey);
     this.saveReportFolder = reportPath;

@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import fs from "fs/promises"
+import fs from "fs/promises";
 
 import { LinuxReader } from "./assistant";
 import { Message } from "./type/Message";
@@ -16,6 +16,7 @@ export class LinuxLLMReaderProvider implements vscode.WebviewViewProvider {
   private allowedMessageType = [
     "Init",
     "InitHistory",
+    "Reset",
     "Ask",
     "Clangd",
     "LinuxPath",
@@ -25,9 +26,11 @@ export class LinuxLLMReaderProvider implements vscode.WebviewViewProvider {
     "OpenAIApiKey",
     "AnthropicApiKey",
     "PlamoApiKey",
+    "GeminiApiKey",
     "OpenAIModelName",
     "AnthropicModelName",
-    "InitSettings"
+    "GeminiModelName",
+    "InitSettings",
   ];
 
   constructor(private readonly context: vscode.ExtensionContext) {}
@@ -40,12 +43,19 @@ export class LinuxLLMReaderProvider implements vscode.WebviewViewProvider {
       this.sendError,
       this.sendState,
       ((await this.getGlobalState("llmName")) as LLMName) ?? "openai",
+      // openai
       ((await this.getGlobalState("OpenAIModel")) as string) ?? "gpt-4.1",
       ((await this.getSecret("OpenAIApiKey")) as string) ?? "",
+      // anthropic
       ((await this.getGlobalState("AnthropicModel")) as string) ??
         "claude-3-7-sonnet-20250219",
       ((await this.getSecret("AnthropicApiKey")) as string) ?? "",
+      // plamo
       ((await this.getSecret("PlamoApiKey")) as string) ?? "",
+      // gemini
+      ((await this.getGlobalState("GeminiModel")) as string) ?? "",
+      ((await this.getSecret("GeminiApiKey")) as string) ?? "",
+      // clangd
       ((await this.getGlobalState("clangdPath")) as string) ??
         "/usr/bin/clangd",
       ((await this.getGlobalState("linuxPath")) as string) ?? "",
@@ -163,14 +173,48 @@ export class LinuxLLMReaderProvider implements vscode.WebviewViewProvider {
             const purpose = historyJSON.purpose;
             const fixedHistoryJSON = {
               content: historyJSON.content,
-              children: historyJSON.children
-            }
+              children: historyJSON.children,
+            };
             // 残るのは choiceTree
             console.log("History Task Start", rootPath, purpose);
-            linuxReaderAssitant?.runFirstTaskWithHistory(rootPath, rootFunctionName, purpose, fixedHistoryJSON);
-          } catch(e) {
+            linuxReaderAssitant?.runFirstTaskWithHistory(
+              rootPath,
+              rootFunctionName,
+              purpose,
+              fixedHistoryJSON
+            );
+          } catch (e) {
             console.error(e);
           }
+          break;
+        case "Reset":
+          linuxReaderAssitant?.doGC();
+          linuxReaderAssitant = null;
+          linuxReaderAssitant = new LinuxReader(
+            this.ask,
+            this.say,
+            this.sendError,
+            this.sendState,
+            ((await this.getGlobalState("llmName")) as LLMName) ?? "openai",
+            // openai
+            ((await this.getGlobalState("OpenAIModel")) as string) ?? "gpt-4.1",
+            ((await this.getSecret("OpenAIApiKey")) as string) ?? "",
+            // anthropic
+            ((await this.getGlobalState("AnthropicModel")) as string) ??
+              "claude-3-7-sonnet-20250219",
+            ((await this.getSecret("AnthropicApiKey")) as string) ?? "",
+            // plamo
+            ((await this.getSecret("PlamoApiKey")) as string) ?? "",
+            // gemini
+            ((await this.getGlobalState("GeminiModel")) as string) ?? "",
+            ((await this.getSecret("GeminiApiKey")) as string) ?? "",
+            // clangd
+            ((await this.getGlobalState("clangdPath")) as string) ??
+              "/usr/bin/clangd",
+            ((await this.getGlobalState("linuxPath")) as string) ?? "",
+            ((await this.getGlobalState("compileCommand")) as string) ?? "",
+            ((await this.getGlobalState("report")) as string) ?? "~/Desktop"
+          );
           break;
         case "Ask":
           const askResponse = message.askResponse;
@@ -217,6 +261,11 @@ export class LinuxLLMReaderProvider implements vscode.WebviewViewProvider {
           this.storeSecret("PlamoApiKey", plamoApi);
           this.init();
           break;
+        case "GeminiApiKey":
+          const geminiApi = message.text;
+          this.storeSecret("GeminiApiKey", geminiApi);
+          this.init();
+          break;
         case "OpenAIModelName":
           const openAIModel = message.text;
           this.updateGlobalState("OpenAIModel", openAIModel);
@@ -225,6 +274,11 @@ export class LinuxLLMReaderProvider implements vscode.WebviewViewProvider {
         case "AnthropicModelName":
           const anthropicModel = message.text;
           this.updateGlobalState("AnthropicModel", anthropicModel);
+          this.init();
+          break;
+        case "GeminiModelName":
+          const geminiModel = message.text;
+          this.updateGlobalState("GeminiModel", geminiModel);
           this.init();
           break;
         case "InitSettings":
@@ -239,15 +293,24 @@ export class LinuxLLMReaderProvider implements vscode.WebviewViewProvider {
   private async sendInitSettingInfoToWebView() {
     const llmName =
       ((await this.getGlobalState("llmName")) as LLMName) ?? "openai";
+    // openai
     const openaiModel =
       ((await this.getGlobalState("OpenAIModel")) as string) ?? "gpt-4.1";
     const openaiApi = ((await this.getSecret("OpenAIApiKey")) as string) ?? "";
+    // anthropic
     const anthropicModel =
       ((await this.getGlobalState("AnthropicModel")) as string) ??
       "claude-3-7-sonnet-20250219";
     const anthropicApi =
       ((await this.getSecret("AnthropicApiKey")) as string) ?? "";
+    // plamo
     const plamoApi = ((await this.getSecret("PlamoApiKey")) as string) ?? "";
+    // gemini
+    const geminiModel =
+      ((await this.getGlobalState("GeminiModel")) as string) ??
+      "gemini-2.0-flash";
+    const geminiApi = ((await this.getSecret("GeminiApiKey")) as string) ?? "";
+    // clangd
     const clangd =
       ((await this.getGlobalState("clangdPath")) as string) ??
       "/usr/bin/clangd";
@@ -270,6 +333,8 @@ export class LinuxLLMReaderProvider implements vscode.WebviewViewProvider {
         anthropicApi,
         anthropicModel,
         plamoApi,
+        geminiModel,
+        geminiApi,
       })
     );
   }

@@ -93,8 +93,9 @@ export async function getFileLineAndCharacterFromFunctionName(
     ? memberAccessFunctionName + ")"
     : memberAccessFunctionName;
   const simplfiedFunctionName = isFirst || memberAccessFunction.length > 1
-    ? wholeFunctionName.split(",")[0].replace(/^[\s\t]*/g, "")
-    : " " + wholeFunctionName.split(",")[0].replace(/^[\s\t]*/g, "");
+    ? [wholeFunctionName.split(",")[0].replace(/^[\s\t]*/g, "")]
+    : [" " + wholeFunctionName.split(",")[0].replace(/^[\s\t]*/g, ""),
+      "\t" + wholeFunctionName.split(",")[0].replace(/^[\s\t]*/g, "")];
   const fileContentArray = fileContent.split("\n");
   let isLongComment = false;
   for (let i in fileContentArray) {
@@ -131,9 +132,15 @@ export async function getFileLineAndCharacterFromFunctionName(
     if (isLongComment) {
       continue;
     }
-    let functionIndex = row.indexOf(simplfiedFunctionName);
+    let functionIndex = row.indexOf(simplfiedFunctionName[0]);
     if (!isFirst && functionIndex >= 0) {
+      functionIndex += 1;
+    }
+    if (functionIndex === -1 && simplfiedFunctionName.length === 2) {
+      functionIndex = row.indexOf(simplfiedFunctionName[1]);
+      if (!isFirst && functionIndex >= 0) {
         functionIndex += 1;
+      }
     }
     if (functionIndex >= 0) {
       return [index, functionIndex];

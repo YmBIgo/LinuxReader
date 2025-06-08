@@ -31,8 +31,10 @@ function App() {
   const [initOpenAIApiKey, setInitOpenAIApiKey] = useState<string>("");
   const [initAnthropicApiKey, setInitAnthropicApiKey] = useState<string>("");
   const [initPlamoApiKey, setInitPlamoApiKey] = useState<string>("");
+  const [initGeminiApiKey, setInitGeminiApiKey] = useState<string>("");
   const [initOpenAIModelName, setInitOpenAIModelName] = useState<OpenAI.ChatModel | "">("");
   const [initAnthropicModelName, setInitAnthropicModelName] = useState<Anthropic.Model | "">("");
+  const [initGeminiModelName, setInitGeminiModelName] = useState<string>("");
 
   useEvent("message", (event: MessageEvent) => {
     const originalMessage = typeof event.data === "string"
@@ -70,6 +72,8 @@ function App() {
         setInitAnthropicApiKey(parsedMessage.anthropicApi);
         setInitAnthropicModelName(parsedMessage.anthropicModel);
         setInitPlamoApiKey(parsedMessage.plamoApi);
+        setInitGeminiApiKey(parsedMessage.geminiApi);
+        setInitGeminiModelName(parsedMessage.geminiModel);
         if (!parsedMessage.clangd || !parsedMessage.linuxPath || !parsedMessage.compileCommand) {
           setIsSettingPage(true);
         }
@@ -80,6 +84,9 @@ function App() {
           setIsSettingPage(true);
         }
         if (parsedMessage.llmName === "plamo" && !parsedMessage.plamoApi) {
+          setIsSettingPage(true);
+        }
+        if (parsedMessage.llmName === "gemini" && (!parsedMessage.geminiApi || !parsedMessage.geminiModel)) {
           setIsSettingPage(true);
         }
         break;
@@ -102,8 +109,10 @@ function App() {
         initOpenAIApiKey={initOpenAIApiKey}
         initAnthropicApiKey={initAnthropicApiKey}
         initPlamoApiKey={initPlamoApiKey}
+        initGeminiApiKey={initGeminiApiKey}
         initOpenAIModelName={initOpenAIModelName}
         initAnthropicModelName={initAnthropicModelName}
+        initGeminiModelName={initGeminiModelName}
       />
       :
       <ChatView

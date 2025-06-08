@@ -102,6 +102,28 @@ const ChatView: React.FC<ChatViewType> = ({
         setPurpose("");
       } else if (inputPhase === 3) {
         // skip
+      } else if (inputPhase === 4) {
+        vscode.postMessage({
+          type: "Reset",
+        });
+        setRootPath("");
+        setRootFunctionName("");
+        setPurpose("");
+        setInputPhase(0);
+        setMessages([
+          {
+            type: "say",
+            content:
+              "「検索したいファイルパス」と「検索する関数の１行」と「目的」を入力してください",
+            time: Date.now(),
+          },
+          {
+            type: "say",
+            content: "「検索したいファイルパス」を入力してください",
+            time: Date.now() + 100,
+          },
+        ]);
+        return;
       } else if (inputPhase === 6) {
         setMessages((m) => [
           ...m,
@@ -253,7 +275,31 @@ const ChatView: React.FC<ChatViewType> = ({
           <hr />
           まだ設定が完了していなかったら設定を完了させてください
           <br />
-          <VscodeButton onClick={() => setIsSettingPage(true)}>
+          <VscodeButton
+            onClick={() => {
+              setIsSettingPage(true);
+              vscode.postMessage({
+                type: "Reset",
+              });
+              setRootPath("");
+              setRootFunctionName("");
+              setPurpose("");
+              setInputPhase(0);
+              setMessages([
+                {
+                  type: "say",
+                  content:
+                    "「検索したいファイルパス」と「検索する関数の１行」と「目的」を入力してください",
+                  time: Date.now(),
+                },
+                {
+                  type: "say",
+                  content: "「検索したいファイルパス」を入力してください",
+                  time: Date.now() + 100,
+                },
+              ]);
+            }}
+          >
             設定画面
           </VscodeButton>
           <br />
