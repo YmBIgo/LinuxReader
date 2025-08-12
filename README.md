@@ -51,13 +51,7 @@ bear -- make LLVM=1 -j16
 
 1.100.0 以上をインストールしてください
 
-4. LinuxReader のインストール
-
-```
-git clone https://github.com/YmBIgo/LinuxReader
-```
-
-5. VSCode で LinuxReader をダウンロード
+4. VSCode で LinuxReader をダウンロード
 
 https://marketplace.visualstudio.com/items?itemName=coffeecupjapan.linux-reader&ssr=false#overview
 
@@ -65,44 +59,13 @@ https://marketplace.visualstudio.com/items?itemName=coffeecupjapan.linux-reader&
 ダウンロード完了したら、「Command + Shift + p」でコマンドパレットを開き、「Open Linux in New Tab」をクリック  
 クリック後に、右側にタブウィンドウが出てくれば成功です
 
-<details>
-
-<summary>***もしくは、ローカルで試したい場合は...***</summary>
-
-5. VSCode での LinuxReader のセットアップ
-
-#### webuiの設定
-```
-cd /path_to_LinuxReader/webui/linux_reader_webui
-npm install
-npm run build
-mv ./dist/assets/<hash_value>.js ./dist/asstes/main.js
-```
-
-#### coreの設定
-
-```
-cd /path_to_LinuxReader
-npm run compile
-```
-
-#### 実行する
-まず、右のバーの「Run and debug」を選択  
-次に、上に出てきている「Run Extension」を選択すれば、Linux Readerの入ったVsCodeウィンドウを開けます
-
-#### 開く
-前述の「実行する」を実行した後で「Command + Shift + p」でコマンドパレットを開き、「Open Linux in New Tab」をクリック  
-クリック後に、右側にタブウィンドウが出てくれば成功です
-
-</details>
-
-6. 設定の入力
+5. 設定の入力
 clangdのパス、Linuxのパス、compile_commands.json のディレクトリのパス、LLM（OpenAI・Claude・Plamo）を入力
 
-7. チャット画面で探索を開始
+6. チャット画面で探索を開始
 最初に、「探索を開始するファイルパス」「探索を開始する関数」「探索の目的」を入力すれば、探索を開始できます。
 
-8. 探索を制御
+7. 探索を制御
 しばらくすると、LLMが関数の中から重要な関数を選ぶので、そこから内容を探索したい関数を選択します。  
 すると、またLLMが関数の中から重要な関数を選ぶので、そこから再度探索したい関数を選択します。  
 以上の流れを、自分がいいと思うまで続けます。
@@ -120,3 +83,7 @@ LinuxReaderの最初のリリース
 ### 1.0.3
 
 Gemini対応
+
+### 1.0.4
+
+jump機能追加

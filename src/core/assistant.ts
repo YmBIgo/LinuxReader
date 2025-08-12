@@ -22,6 +22,7 @@ import {
   pickCandidatePromopt,
 } from "./prompt/index_ja";
 import pWaitFor from "p-wait-for";
+import { is7wordString } from "./util/number";
 
 let client: ClangdLanguageClient | null;
 
@@ -201,20 +202,22 @@ export class LinuxReader {
         currentFilePath,
         currentFunctionName,
         currentFunctionName,
-        true
+        true,
       );
     if (currentLine === -1 && currentCharacter === -1) {
       this.sendErrorSocket(
         `以下の内容は見つかりませんでした ${currentFunctionName} @ ${currentFilePath}...`
       );
     }
+    const functionCodeContent = await getFunctionContentFromLineAndCharacter(currentFilePath, currentLine, currentCharacter);
     this.rootLine = currentLine;
     this.rootCharacter = currentCharacter;
     this.purpose = purpose;
     this.historyHanlder = new HistoryHandler(
       this.rootPath,
       currentFunctionName,
-      currentFunctionName
+      currentFunctionName,
+      functionCodeContent,
     );
     this.historyHanlder.overWriteChoiceTree(choiceTree);
     const historyTree = this.historyHanlder.showHistory();
@@ -223,9 +226,8 @@ export class LinuxReader {
     }
     const question = "過去の履歴の中から検索したいハッシュ値を入力してください。末端のノードからは検索できません";
     const result = await this.askSocket(question);
-    const resultNumber = parseInt(result.ask);
-    if (isNaN(resultNumber) || resultNumber > 999999) {
-      this.runHistoryPoint(result.ask);
+    if (is7wordString(result.ask)) {
+      await this.runHistoryPoint(result.ask);
       return;
     }
     this.sendErrorSocket("ハッシュ値が見つかりませんでした。再度閉じて再試行してください");
@@ -250,13 +252,19 @@ export class LinuxReader {
         `以下の内容は見つかりませんでした ${currentFunctionName} @ ${currentFilePath}...`
       );
     }
+    const functionCodeContent = await getFunctionContentFromLineAndCharacter(
+      currentFilePath,
+      currentLine,
+      currentCharacter
+    );
     this.rootLine = currentLine;
     this.rootCharacter = currentCharacter;
     this.purpose = purpose;
     this.historyHanlder = new HistoryHandler(
       this.rootPath,
       currentFunctionName,
-      currentFunctionName
+      currentFunctionName,
+      functionCodeContent,
     );
     this.runInitialTask(this.rootPath, this.rootLine, this.rootCharacter);
   }
@@ -327,6 +335,7 @@ ${functionContent}
       let isLongComment2 = false;
       const fileCodeLine =
         fileContentArray.find((fcr) => {
+          if (!fcr) return false
           if (fcr.includes(each_r.code_line)) {
             return true;
           }
@@ -434,7 +443,7 @@ ${functionContent}
       resultNumber = Number(result.ask);
       const newMessages = this.addMessages(`User Enter ${result.ask}`, "user");
       this.sendState(newMessages);
-      if (isNaN(resultNumber) || resultNumber > 999999) {
+      if (isNaN(resultNumber) || is7wordString(result.ask)) {
         // this.runHistoryPoint(result.ask);
         break;
       }
@@ -457,35 +466,8 @@ ${functionContent}
         continue;
       }
       if (resultNumber === 8) {
-        try {
-          const openDoc = await vscode.workspace.openTextDocument(
-            currentFilePath
-          );
-          await vscode.window.showTextDocument(openDoc, {
-            preview: false, // タブの使い回しを避ける場合は false
-            preserveFocus: false, // エディタにフォーカスを移す
-          });
-          const openDocText = openDoc.getText().split("\n");
-          const functionLines = functionContent.split("\n").filter((fcr) => {
-            return fcr.replace(/\s\t/g, "") !== "";
-          });
-          let functionStartLine = functionLines[0];
-          let functionEndLine = functionLines.at(-1);
-          const functionStartLineIndex =
-            openDocText.findIndex((odt) => odt === functionStartLine) ?? 0;
-          const positionStart = new vscode.Position(functionStartLineIndex, 0);
-          const positionEnd = new vscode.Position(
-            functionStartLineIndex + functionContent.split("\n").length,
-            functionEndLine?.length ?? 10000
-          );
-          const selection = new vscode.Selection(positionStart, positionEnd);
-          vscode.window.activeTextEditor!.selection = selection;
-          // this.saySocket("\n\n----------\n" + functionContent + "\n----------\n\n");
-          continue;
-        } catch (e) {
-          console.warn(e);
-          continue;
-        }
+        this.jumpToCode(currentFilePath, functionContent)
+        continue;
       } else if (resultNumber === 9) {
         await this.getMermaid(functionContent);
         continue;
@@ -497,8 +479,8 @@ ${functionContent}
         continue;
       }
     }
-    if (isNaN(resultNumber) || resultNumber > 999999) {
-      this.runHistoryPoint(result.ask);
+    if (is7wordString(result.ask)) {
+      await this.runHistoryPoint(result.ask);
       return;
     }
     if (resultNumber === 5) {
@@ -535,6 +517,7 @@ ${functionContent}
       this.saveChoiceTree();
       return;
     }
+    this.jumpToCode(removeFilePrefixFromFilePath(newFile), newFunctionContent);
     this.historyHanlder?.choose(resultNumber, newFunctionContent);
     this.saySocket(
       `LLMは ${newFile}@${newLine}:${newCharacter} を検索しています`
@@ -542,7 +525,41 @@ ${functionContent}
     this.runTask(removeFilePrefixFromFilePath(newFile), newFunctionContent);
   }
 
-  private runHistoryPoint(historyHash: string) {
+  private async jumpToCode(currentFilePath: string, functionContent: string) {
+    try {
+      const openDoc = await vscode.workspace.openTextDocument(
+        currentFilePath
+      );
+      await vscode.window.showTextDocument(openDoc, {
+        preview: false, // タブの使い回しを避ける場合は false
+        preserveFocus: false, // エディタにフォーカスを移す
+      });
+      const openDocText = openDoc.getText().split("\n");
+      const functionLines = functionContent.split("\n").filter((fcr) => {
+        return fcr.replace(/\s\t/g, "") !== "";
+      });
+      let functionStartLine = functionLines[0];
+      let functionEndLine = functionLines.at(-1);
+      const functionStartLineIndex =
+        openDocText.findIndex((odt) => odt === functionStartLine) ?? 0;
+      const positionStart = new vscode.Position(functionStartLineIndex, 0);
+      const positionEnd = new vscode.Position(
+        functionStartLineIndex + functionContent.split("\n").length,
+        functionEndLine?.length ?? 10000
+      );
+      const selection = new vscode.Selection(positionStart, positionEnd);
+      vscode.window.activeTextEditor!.selection = selection;
+      vscode.window.activeTextEditor?.revealRange(
+        new vscode.Range(positionStart, positionEnd),
+        vscode.TextEditorRevealType.AtTop
+      )
+      // this.saySocket("\n\n----------\n" + functionContent + "\n----------\n\n");
+    } catch (e) {
+      console.warn(e);
+    }
+  }
+
+  private async runHistoryPoint(historyHash: string) {
     const newRunConfig = this.historyHanlder?.moveById(historyHash);
     if (!newRunConfig) {
       this.sendErrorSocket(
@@ -551,8 +568,31 @@ ${functionContent}
       this.saveChoiceTree();
       return;
     }
-    const { functionCodeLine, originalFilePath } = newRunConfig;
-    this.runTask(originalFilePath, functionCodeLine);
+    const { functionCodeContent, functionCodeLine, functionName, originalFilePath } = newRunConfig;
+    let functionResult = functionCodeContent;
+    if (!functionCodeContent) {
+      const [line, character] = await getFileLineAndCharacterFromFunctionName(originalFilePath, functionCodeLine, functionName);
+      if (line === -1 && character === -1) {
+        this.sendErrorSocket(
+          `Can not find function of selected search history. ${historyHash}`
+        );
+        this.saveChoiceTree();
+        return;
+      }
+      const [newFile, , , newFileContent] = await this.queryClangd(originalFilePath, line, character);
+      if (!newFile) {
+        console.error("Gopls fails to search file");
+        this.sendErrorSocket("Gopls fails to search file");
+        this.saveChoiceTree();
+        return;
+      }
+      functionResult = newFileContent;
+    }
+    const foundCallback = (st: ChoiceTree) => {
+      st.content.functionCodeContent = functionResult ?? functionCodeLine;
+    }
+    this.historyHanlder?.moveById(historyHash, foundCallback);
+    this.runTask(originalFilePath, functionResult ?? functionCodeLine);
   }
 
   private async getReport() {
@@ -612,8 +652,8 @@ ${functionContent}
     this.saySocket(`"${functionResult}"と関連するバグを探しています`);
     const userPrompt = `<functions or methods>
 ${result}
-<the suspicious behavior (optional)>
-${description ? description : "not provided..."}
+<the potential bugs (optional)>
+${description.ask ? description.ask : "not provided..."}
 `;
     const history: Anthropic.MessageParam[] = [
       { role: "user", content: userPrompt },
@@ -621,8 +661,10 @@ ${description ? description : "not provided..."}
     const response =
       (await this.apiHandler?.createMessage(bugFixPrompt, history, false)) ||
       "failed to get result";
-    this.saySocket("Generate Bugs Report. Done!");
+    const fileName = `bugreport_${Date.now()}.txt`;
+    await fs.writeFile(`${this.saveReportFolder}/${fileName}`, response + "\n\n" + result);
     this.saySocket(response);
+    this.saySocket(`バグレポートは以下の場所に保存されました @${this.saveReportFolder}/${fileName}`);
   }
   private async saveChoiceTree() {
     const choiceTreeWithAdditionalInfo = {
