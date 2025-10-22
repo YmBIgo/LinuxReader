@@ -502,7 +502,8 @@ ${functionContent}
         currentFilePath,
         responseJSON[resultNumber].code_line,
         responseJSON[resultNumber].name,
-        false
+        false,
+        true
       );
     if (searchLine === -1 && searchCharacter === -1) {
       this.sendErrorSocket(`ファイルの内容の検索中に失敗しました`);
@@ -587,7 +588,7 @@ ${functionContent}
       const { functionCodeContent, functionCodeLine, functionName, originalFilePath, id } = currentRunConfig;
       let functionResult = functionCodeContent;
       if (!functionCodeContent) {
-        const [line, character] = await getFileLineAndCharacterFromFunctionName(originalFilePath, functionCodeLine, functionName);
+        const [line, character] = await getFileLineAndCharacterFromFunctionName(originalFilePath, functionCodeLine, functionName, false);
         if (line === -1 && character === -1) {
           this.sendErrorSocket(
             `Can not find function of selected search history. ${historyHash}`
@@ -640,7 +641,7 @@ ${functionContent}
     const { functionCodeContent, functionCodeLine, functionName, originalFilePath } = newRunConfig;
     let functionResult = functionCodeContent;
     if (!functionCodeContent) {
-      const [line, character] = await getFileLineAndCharacterFromFunctionName(originalFilePath, functionCodeLine, functionName);
+      const [line, character] = await getFileLineAndCharacterFromFunctionName(originalFilePath, functionCodeLine, functionName, false);
       if (line === -1 && character === -1) {
         this.sendErrorSocket(
           `Can not find function of selected search history. ${historyHash}`

@@ -75,7 +75,8 @@ export async function getFileLineAndCharacterFromFunctionName(
   filePath: string,
   codeLine: string,
   functionName: string,
-  isFirst: boolean = false
+  isFirst: boolean = false,
+  isSearchNameOnly: boolean = false,
 ): Promise<[number, number]> {
   let fileContent: string = "";
   try {
@@ -84,6 +85,7 @@ export async function getFileLineAndCharacterFromFunctionName(
     console.error(e);
     return [-1, -1];
   }
+  console.log(filePath, functionName, isFirst);
   const memberAccessFunction = functionName.split("->");
   const memberAccessFunctionName =
     memberAccessFunction[memberAccessFunction.length - 1];
@@ -92,14 +94,33 @@ export async function getFileLineAndCharacterFromFunctionName(
     : memberAccessFunction.length > 1
     ? memberAccessFunctionName + ")"
     : memberAccessFunctionName;
+  const splittedWholeFunctionName = wholeFunctionName.split(",")[0].replace(/^[\s\t]*/g, "");
   const simplfiedFunctionName = isFirst || memberAccessFunction.length > 1
-    ? [wholeFunctionName.split(",")[0].replace(/^[\s\t]*/g, "")]
-    : [" " + wholeFunctionName.split(",")[0].replace(/^[\s\t]*/g, ""),
-      "\t" + wholeFunctionName.split(",")[0].replace(/^[\s\t]*/g, "")];
+    ?
+    [
+      splittedWholeFunctionName,
+      "*" + splittedWholeFunctionName
+    ]
+    :
+    [
+      " " + splittedWholeFunctionName,
+      "\t" + splittedWholeFunctionName,
+      " *" + splittedWholeFunctionName,
+      "\t*" + splittedWholeFunctionName,
+    ];
+  const searchNameOnlyFunctionName = isSearchNameOnly
+  ?
+  [
+    "(" + splittedWholeFunctionName,
+    ")" + splittedWholeFunctionName,
+    "!" + splittedWholeFunctionName
+  ]
+  :
+  []
   const fileContentArray = fileContent.split("\n");
   let isLongComment = false;
   for (let i in fileContentArray) {
-    const index = isNaN(Number(i)) ? -1 : Number(i);
+    let index = isNaN(Number(i)) ? -1 : Number(i);
     const row = fileContentArray[index];
     if (row.replace(/\s\t/g, "").startsWith("//")) {
       continue;
@@ -136,10 +157,33 @@ export async function getFileLineAndCharacterFromFunctionName(
     if (!isFirst && functionIndex >= 0) {
       functionIndex += 1;
     }
-    if (functionIndex === -1 && simplfiedFunctionName.length === 2) {
-      functionIndex = row.indexOf(simplfiedFunctionName[1]);
-      if (!isFirst && functionIndex >= 0) {
-        functionIndex += 1;
+    if (functionIndex === -1 && simplfiedFunctionName.length > 1) {
+      for (let i = 1; i < simplfiedFunctionName.length; i++) {
+        functionIndex = row.indexOf(simplfiedFunctionName[i]);
+        if (functionIndex >= 0) {
+          if (i > 1 || isFirst) {
+            functionIndex += 2;
+          } else {
+            functionIndex += 1;
+          }
+          break;
+        }
+      }
+      // special care for wierd indent...
+      // such like `copy_p4d_range`
+      if (row.startsWith(splittedWholeFunctionName)) {
+        functionIndex = 0;
+        index -= 1;
+      }
+      // if user only want to search function name, care it.
+      if (functionIndex === -1 && searchNameOnlyFunctionName.length !== 0) {
+        for (let j = 0; j < searchNameOnlyFunctionName.length; j++) {
+          functionIndex = row.indexOf(searchNameOnlyFunctionName[j]);
+          if (functionIndex !== -1) {
+            functionIndex += 1;
+            break;
+          }
+        }
       }
     }
     if (functionIndex >= 0) {
