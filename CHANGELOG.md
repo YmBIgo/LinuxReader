@@ -4,13 +4,17 @@ All notable changes to the "linux-reader" extension will be documented in this f
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## 1.0.7
+
+- バグ修正と単体テストの導入
+
 ## 1.0.6
 
-セキュリティアップデート
+- セキュリティアップデート
 
 ## 1.0.5
 
-履歴入力時に、対話的にコードジャンプする機能追加
+- 履歴入力時に、対話的にコードジャンプする機能追加
 
 ## 1.0.4
 
