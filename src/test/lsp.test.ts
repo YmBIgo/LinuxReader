@@ -7,6 +7,7 @@ import fork_content from "./stub/lsp/fork_content.json";
 import memory_content from "./stub/lsp/memory_content.json";
 import path from "path";
 
+// please edit pathToYourDirectory when you want to test it.
 const pathToYourDirectory = "/Users/kazuyakurihara/Documents/work/llm/LinuxReader"
 
 suite('Extension LSP', () => {
