@@ -9,33 +9,13 @@ const pathToYourDirectory = "/Users/kazuyakurihara/Documents/work/llm/LinuxReade
 
 suite('Extension History', () => {
     let originalJsonChoice = {} as any;
+    let originalShowHistory = "";
     before(async() => {
         const stubFilePath = path.resolve(pathToYourDirectory, "src", "test", "stub", "history", "choices_1761211686430.json");
         const jsonChoiceString = await fs.readFile(stubFilePath, "utf-8");
         const jsonChoice = JSON.parse(jsonChoiceString);
         originalJsonChoice = jsonChoice;
-    });
-    // overWriteChoiceTree & getChoiceTree
-    test('overWriteChoiceTree & getChoiceTree', async() => {
-        const history = new HistoryHandler(
-            "/Users/kazuyakurihara/Documents/open_source/linux/linux/kernel/fork.c",
-            "__latent_entropy struct task_struct *copy_process(",
-            "__latent_entropy struct task_struct *copy_process(",
-            ""
-        );
-        history.overWriteChoiceTree(originalJsonChoice);
-        assert.strictEqual(history.getChoiceTree(), originalJsonChoice);
-    });
-    // showHistory
-    test('showHistory', async() => {
-        const history = new HistoryHandler(
-            "/Users/kazuyakurihara/Documents/open_source/linux/linux/kernel/fork.c",
-            "__latent_entropy struct task_struct *copy_process(",
-            "__latent_entropy struct task_struct *copy_process(",
-            ""
-        );
-        history.overWriteChoiceTree(originalJsonChoice);
-        const expectResult =
+        originalShowHistory =
 `rootPath: /Users/kazuyakurihara/Documents/open_source/linux/linux/kernel/fork.c
 
 |__latent_entropy struct task_struct *copy_process(
@@ -123,7 +103,28 @@ suite('Extension History', () => {
    |dde956f
 
 `
-        assert.strictEqual(history.showHistory(), expectResult);
+    });
+    // overWriteChoiceTree & getChoiceTree
+    test('overWriteChoiceTree & getChoiceTree', async() => {
+        const history = new HistoryHandler(
+            "/Users/kazuyakurihara/Documents/open_source/linux/linux/kernel/fork.c",
+            "__latent_entropy struct task_struct *copy_process(",
+            "__latent_entropy struct task_struct *copy_process(",
+            ""
+        );
+        history.overWriteChoiceTree(originalJsonChoice);
+        assert.strictEqual(history.getChoiceTree(), originalJsonChoice);
+    });
+    // showHistory
+    test('showHistory', async() => {
+        const history = new HistoryHandler(
+            "/Users/kazuyakurihara/Documents/open_source/linux/linux/kernel/fork.c",
+            "__latent_entropy struct task_struct *copy_process(",
+            "__latent_entropy struct task_struct *copy_process(",
+            ""
+        );
+        history.overWriteChoiceTree(originalJsonChoice);
+        assert.strictEqual(history.showHistory(), originalShowHistory);
     });
     
     test('searchTreeByIdPublic to the node which you have been through', () => {
@@ -142,7 +143,9 @@ suite('Extension History', () => {
         assert.strictEqual("copy_mm", searchResult?.processChoice?.functionName);
         assert.strictEqual("/Users/kazuyakurihara/Documents/open_source/linux/linux/kernel/fork.c", searchResult?.processChoice?.originalFilePath);
         assert.strictEqual("c2bc4ce3db24d5ab0f911785", searchResult?.processChoice?.id);
-        assert.strictEqual(true, !!searchResult?.processChoice?.functionCodeContent)
+        assert.strictEqual(true, !!searchResult?.processChoice?.functionCodeContent);
+        // history check
+        assert.strictEqual(history.showHistory(), originalShowHistory);
     });
 
     test('searchTreeByIdPublic to the node which you have not been through', () => {
@@ -161,6 +164,8 @@ suite('Extension History', () => {
         assert.strictEqual("/Users/kazuyakurihara/Documents/open_source/linux/linux/kernel/fork.c", searchResult?.processChoice?.originalFilePath);
         assert.strictEqual("8035326fac1a5d881fffc560", searchResult?.processChoice?.id);
         assert.strictEqual(undefined, searchResult?.processChoice?.functionCodeContent);
+        // history check
+        assert.strictEqual(history.showHistory(), originalShowHistory);
     });
 
     test('searchTreeByIdPublic to the node which does not exist', () => {
@@ -173,6 +178,8 @@ suite('Extension History', () => {
         history.overWriteChoiceTree(originalJsonChoice);
         const searchResult = history.searchTreeByIdPublic("1111111");
         assert.strictEqual(true, searchResult === null);
+        // history check
+        assert.strictEqual(history.showHistory(), originalShowHistory);
     });
 
     test('moveById to the node which you have been through', () => {
@@ -192,6 +199,8 @@ suite('Extension History', () => {
         assert.strictEqual("retval = copy_mm(clone_flags, p);", movedSearchResult?.functionCodeLine);
         assert.strictEqual("/Users/kazuyakurihara/Documents/open_source/linux/linux/kernel/fork.c", movedSearchResult?.originalFilePath);
         assert.strictEqual("c2bc4ce3db24d5ab0f911785", movedSearchResult?.id);
+        // history check
+        assert.strictEqual(history.showHistory(), originalShowHistory);
     });
 
     test('moveById to the node which you have not been through', () => {
@@ -211,6 +220,8 @@ suite('Extension History', () => {
         assert.strictEqual("mm = allocate_mm();", movedSearchResult?.functionCodeLine);
         assert.strictEqual("/Users/kazuyakurihara/Documents/open_source/linux/linux/kernel/fork.c", movedSearchResult?.originalFilePath);
         assert.strictEqual("8035326fac1a5d881fffc560", movedSearchResult?.id);
+        // history check
+        assert.strictEqual(history.showHistory(), originalShowHistory);
     });
 
     test('moveById to the node which does not exist', () => {
@@ -225,5 +236,7 @@ suite('Extension History', () => {
         assert.strictEqual(true, searchResult === null);
         const movedSearchResult = history.moveById("1111111");
         assert.strictEqual(movedSearchResult, null);
+        // history check
+        assert.strictEqual(history.showHistory(), originalShowHistory);
     });
 });
