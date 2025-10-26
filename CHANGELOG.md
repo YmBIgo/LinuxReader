@@ -4,6 +4,10 @@ All notable changes to the "linux-reader" extension will be documented in this f
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## 1.0.8
+
+- History検索関連のバグ修正とHistoryでの単体テストの導入
+
 ## 1.0.7
 
 - バグ修正と単体テストの導入

@@ -91,6 +91,7 @@ export class HistoryHandler {
             width: selectIndex
         }];
         this.searchByChoicePositionArray((choiceTree) => {
+            if (!functionCodeContent) return;
             choiceTree.content.functionCodeContent = functionCodeContent;
         });
     }
@@ -228,5 +229,8 @@ ${functionCode}
     }
     getChoiceTree() {
         return this.choiceTree;
+    }
+    getCurrentChoicePosition() {
+        return this.currentChoicePosition;
     }
 }

@@ -526,7 +526,7 @@ ${functionContent}
       } 
       return hc
     })
-    this.historyHanlder?.addHistory(newHistoryChoices);
+    // this.historyHanlder?.addHistory(newHistoryChoices);
     this.jumpToCode(removeFilePrefixFromFilePath(newFile), newFunctionContent);
     this.historyHanlder?.choose(resultNumber, newFunctionContent);
     this.saySocket(
@@ -536,6 +536,7 @@ ${functionContent}
   }
 
   private async jumpToCode(currentFilePath: string, functionContent: string) {
+    console.log("jumping to content : ", currentFilePath, functionContent);
     try {
       const openDoc = await vscode.workspace.openTextDocument(
         currentFilePath
@@ -640,6 +641,7 @@ ${functionContent}
     }
     const { functionCodeContent, functionCodeLine, functionName, originalFilePath } = newRunConfig;
     let functionResult = functionCodeContent;
+    let filePath = originalFilePath;
     if (!functionCodeContent) {
       const [line, character] = await getFileLineAndCharacterFromFunctionName(originalFilePath, functionCodeLine, functionName, false);
       if (line === -1 && character === -1) {
@@ -656,13 +658,15 @@ ${functionContent}
         this.saveChoiceTree();
         return;
       }
+      filePath = newFile;
       functionResult = newFileContent;
     }
     const foundCallback = (st: ChoiceTree) => {
       st.content.functionCodeContent = functionResult ?? functionCodeLine;
     }
     this.historyHanlder?.moveById(historyHash, foundCallback);
-    this.runTask(originalFilePath, functionResult ?? functionCodeLine);
+    await this.jumpToCode(removeFilePrefixFromFilePath(filePath), functionResult ?? functionCodeLine);
+    this.runTask(removeFilePrefixFromFilePath(filePath), functionResult ?? functionCodeLine);
   }
 
   private async getReport() {
@@ -831,7 +835,7 @@ ${description.ask ? description.ask : "not provided..."}
     let newCharacter2 = newCharacter1;
     let item2 = item1;
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 5; i++) {
       if (newFilePath2.endsWith(".h")) {
         [newFilePath2, newLine2, newCharacter2, item2] =
           await this.doQueryClangd(

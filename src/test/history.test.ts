@@ -10,13 +10,13 @@ const pathToYourDirectory = "/Users/kazuyakurihara/Documents/work/llm/LinuxReade
 suite('Extension History', () => {
     let originalJsonChoice = {} as any;
     let originalShowHistory = "";
-    before(async() => {
+    before(async () => {
         const stubFilePath = path.resolve(pathToYourDirectory, "src", "test", "stub", "history", "choices_1761211686430.json");
         const jsonChoiceString = await fs.readFile(stubFilePath, "utf-8");
         const jsonChoice = JSON.parse(jsonChoiceString);
         originalJsonChoice = jsonChoice;
         originalShowHistory =
-`rootPath: /Users/kazuyakurihara/Documents/open_source/linux/linux/kernel/fork.c
+            `rootPath: /Users/kazuyakurihara/Documents/open_source/linux/linux/kernel/fork.c
 
 |__latent_entropy struct task_struct *copy_process(
 |f1c8e32
@@ -105,7 +105,7 @@ suite('Extension History', () => {
 `
     });
     // overWriteChoiceTree & getChoiceTree
-    test('overWriteChoiceTree & getChoiceTree', async() => {
+    test('overWriteChoiceTree & getChoiceTree', async () => {
         const history = new HistoryHandler(
             "/Users/kazuyakurihara/Documents/open_source/linux/linux/kernel/fork.c",
             "__latent_entropy struct task_struct *copy_process(",
@@ -116,7 +116,7 @@ suite('Extension History', () => {
         assert.strictEqual(history.getChoiceTree(), originalJsonChoice);
     });
     // showHistory
-    test('showHistory', async() => {
+    test('showHistory', async () => {
         const history = new HistoryHandler(
             "/Users/kazuyakurihara/Documents/open_source/linux/linux/kernel/fork.c",
             "__latent_entropy struct task_struct *copy_process(",
@@ -126,7 +126,8 @@ suite('Extension History', () => {
         history.overWriteChoiceTree(originalJsonChoice);
         assert.strictEqual(history.showHistory(), originalShowHistory);
     });
-    
+
+    // searchTreeByIdPublic
     test('searchTreeByIdPublic to the node which you have been through', () => {
         const history = new HistoryHandler(
             "/Users/kazuyakurihara/Documents/open_source/linux/linux/kernel/fork.c",
@@ -138,7 +139,7 @@ suite('Extension History', () => {
         const searchResult = history.searchTreeByIdPublic("c2bc4ce");
         assert.strictEqual(false, searchResult === null);
         // searchResultがnullでないのをチェック済み
-        assert.strictEqual(JSON.stringify([{depth:0, width:0}, {depth:1, width:0}]), JSON.stringify(searchResult?.pos));
+        assert.strictEqual(JSON.stringify([{ depth: 0, width: 0 }, { depth: 1, width: 0 }]), JSON.stringify(searchResult?.pos));
         assert.strictEqual("retval = copy_mm(clone_flags, p);", searchResult?.processChoice?.functionCodeLine);
         assert.strictEqual("copy_mm", searchResult?.processChoice?.functionName);
         assert.strictEqual("/Users/kazuyakurihara/Documents/open_source/linux/linux/kernel/fork.c", searchResult?.processChoice?.originalFilePath);
@@ -182,6 +183,7 @@ suite('Extension History', () => {
         assert.strictEqual(history.showHistory(), originalShowHistory);
     });
 
+    // moveById
     test('moveById to the node which you have been through', () => {
         const history = new HistoryHandler(
             "/Users/kazuyakurihara/Documents/open_source/linux/linux/kernel/fork.c",
@@ -239,4 +241,127 @@ suite('Extension History', () => {
         // history check
         assert.strictEqual(history.showHistory(), originalShowHistory);
     });
+    // getContentFromPos
+    test('getContentFromPos for correct pos', () => {
+        const history = new HistoryHandler(
+            "/Users/kazuyakurihara/Documents/open_source/linux/linux/kernel/fork.c",
+            "__latent_entropy struct task_struct *copy_process(",
+            "__latent_entropy struct task_struct *copy_process(",
+            ""
+        );
+        history.overWriteChoiceTree(originalJsonChoice);
+        const searchResult = history.searchTreeByIdPublic("27b1b2f");
+        const expectedSearchPosResult = [
+            {
+                depth: 0,
+                width: 0
+            },
+            {
+                depth: 1,
+                width: 0
+            },
+            {
+                depth: 2,
+                width: 0
+            },
+            {
+                depth: 3,
+                width: 1
+            },
+            {
+                depth: 4,
+                width: 2
+            },
+            {
+                depth: 5,
+                width: 0
+            },
+            {
+                depth: 6,
+                width: 0
+            }
+        ]
+        assert.strictEqual(JSON.stringify(searchResult?.pos), JSON.stringify(expectedSearchPosResult));
+        const getContentFromPosResult = history.getContentFromPos(expectedSearchPosResult);
+        assert.strictEqual(getContentFromPosResult?.id, "27b1b2fc0ca4580fccf96d67");
+        assert.strictEqual(getContentFromPosResult?.functionName, "copy_pud_range");
+        assert.strictEqual(getContentFromPosResult?.originalFilePath, "/Users/kazuyakurihara/Documents/open_source/linux/linux/mm/memory.c");
+        assert.strictEqual(getContentFromPosResult?.functionCodeLine, "if (copy_pud_range(dst_vma, src_vma, dst_p4d, src_p4d,");
+    });
+    test('getContentFromPos for incorrect pos', () => {
+        const history = new HistoryHandler(
+            "/Users/kazuyakurihara/Documents/open_source/linux/linux/kernel/fork.c",
+            "__latent_entropy struct task_struct *copy_process(",
+            "__latent_entropy struct task_struct *copy_process(",
+            ""
+        );
+        history.overWriteChoiceTree(originalJsonChoice);
+        const expectedSearchPosResult = [{depth:0, width: 10}, {depth: 1, width: 10}];
+        const getContentFromPosResult = history.getContentFromPos(expectedSearchPosResult);
+        assert.strictEqual(getContentFromPosResult, null);
+    });
+    // choose
+    test('choose for correct choices chain', () => {
+        const history = new HistoryHandler(
+            "/Users/kazuyakurihara/Documents/open_source/linux/linux/kernel/fork.c",
+            "__latent_entropy struct task_struct *copy_process(",
+            "__latent_entropy struct task_struct *copy_process(",
+            ""
+        );
+        history.overWriteChoiceTree(originalJsonChoice);
+        const expectedCurrentChoicePosition1 = [
+            {
+                depth: 0,
+                width: 0
+            },
+            {
+                depth: 1,
+                width: 0
+            },
+            {
+                depth: 2,
+                width: 0
+            },
+            {
+                depth: 3,
+                width: 1
+            },
+            {
+                depth: 4,
+                width: 2
+            }
+        ]
+        history.moveById("84ee1bb");
+        const currentChoicePosition1 = history.getCurrentChoicePosition();
+        assert.strictEqual(JSON.stringify(currentChoicePosition1), JSON.stringify(expectedCurrentChoicePosition1));
+        history.choose(0, "");
+        const currentChoicePosition2 = history.getCurrentChoicePosition();
+        const expectedCurrentChoicePosition2 = [
+            {
+                depth: 0,
+                width: 0
+            },
+            {
+                depth: 1,
+                width: 0
+            },
+            {
+                depth: 2,
+                width: 0
+            },
+            {
+                depth: 3,
+                width: 1
+            },
+            {
+                depth: 4,
+                width: 2
+            },
+            {
+                depth: 5,
+                width: 0
+            }
+        ]
+        assert.strictEqual(JSON.stringify(currentChoicePosition2), JSON.stringify(expectedCurrentChoicePosition2));
+    })
 });
