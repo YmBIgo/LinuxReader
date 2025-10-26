@@ -121,6 +121,7 @@ const SettingView: React.FC<SettingViewType> = ({
     ""
   );
   const [openAIModelList] = useState<string[]>([
+    "gpt-5",
     "gpt-4.1",
     "gpt-4o",
     "gpt-4o-mini",
@@ -140,8 +141,12 @@ const SettingView: React.FC<SettingViewType> = ({
     Anthropic.Model | ""
   >("");
   const [anthropicModelList] = useState<string[]>([
-    "claude-3-7-sonnet-20250219",
+    "claude-sonnet-4-5",
+    "claude-haiku-4-5",
+    "claude-opus-4-1",
     "claude-sonnet-4-20250514",
+    "claude-opus-4-20250514",
+    "claude-3-7-sonnet-20250219",
     "claude-3-5-sonnet-20241022",
   ]);
   const updateAnthropicModelName = () => {

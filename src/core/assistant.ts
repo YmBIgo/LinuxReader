@@ -20,6 +20,7 @@ import {
   bugFixPrompt,
   mermaidPrompt,
   pickCandidatePromopt,
+  reportPromopt,
 } from "./prompt/index_ja";
 import pWaitFor from "p-wait-for";
 import { is7wordString } from "./util/number";
@@ -536,7 +537,6 @@ ${functionContent}
   }
 
   private async jumpToCode(currentFilePath: string, functionContent: string) {
-    console.log("jumping to content : ", currentFilePath, functionContent);
     try {
       const openDoc = await vscode.workspace.openTextDocument(
         currentFilePath
@@ -687,7 +687,7 @@ ${result}`;
     ];
     const response =
       (await this.apiHandler?.createMessage(
-        pickCandidatePromopt,
+        reportPromopt,
         history,
         false
       )) || "failed to get result";
