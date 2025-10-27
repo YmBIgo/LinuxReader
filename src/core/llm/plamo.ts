@@ -47,12 +47,14 @@ export class PlamoHanlder implements LLMModel {
           result.choices[0].message.content
             .replace("```json", "")
             .replace(/```/g, "")
+            .replace(/	/g, "\\t")
         );
       }
       return (
         result.choices[0].message.content
           .replace("```json", "")
-          .replace(/```/g, "") ?? "{}"
+          .replace(/```/g, "")
+          .replace(/	/g, "\\t") ?? "{}"
       );
     } catch (e) {
       console.error(e);

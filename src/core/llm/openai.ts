@@ -35,13 +35,15 @@ export class OpenAIHandler implements LLMModel {
         JSON.parse(
           response.choices[0].message.content
             ?.replace("```json", "")
-            .replace(/```/g, "") ?? "unknown"
+            .replace(/```/g, "")
+            .replace(/	/g, "\\t") ?? "unknown"
         );
       }
       return (
         response.choices[0].message.content
           ?.replace("```json", "")
-          .replace(/```/g, "") ?? "{}"
+          .replace(/```/g, "")
+          .replace(/	/g, "\\t") ?? "{}"
       );
     } catch (e) {
       console.error(e);

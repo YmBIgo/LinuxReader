@@ -33,10 +33,14 @@ export class GeminiHandler implements LLMModel {
       const responseText = response.text;
       if (isJSON) {
         JSON.parse(
-          responseText?.replace("```json", "").replace(/```/g, "") ?? "unknown"
+          responseText?.replace("```json", "")
+          .replace(/```/g, "")
+          .replace(/	/g, "\\t") ?? "unknown"
         );
       }
-      return responseText?.replace("```json", "").replace(/```/g, "") ?? "{}";
+      return responseText?.replace("```json", "")
+      .replace(/```/g, "")
+      .replace(/	/g, "\\t") ?? "{}";
     } catch (e) {
       console.error(e);
       this.attemptCount += 1;

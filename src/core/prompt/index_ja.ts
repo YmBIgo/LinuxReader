@@ -11,7 +11,7 @@ export const pickCandidatePromopt = `
 
 ルール
 
-- ユーザーはあなたに「Linuxコードリーディングの目的」「今見ている関数の内容」を提供します。それに対してあなたは、JSON形式で１〜５個の「目的に最も関連する関数名」「その関数を含む１行」「説明」「どれくらい関連しているかを100点満点で自己採点した結果」を返します
+- ユーザーはあなたに「Linuxコードリーディングの目的」「今見ている関数の内容」「関数の動作ステップ」を提供します。それに対してあなたは、JSON形式で１〜５個の「目的に最も関連する関数名」「その関数を含む１行」「説明」「どれくらい関連しているかを100点満点で自己採点した結果」「対応する関数のステップ」を返します
 
 [例]
 
@@ -235,38 +235,71 @@ void start_kernel(void)
 }
 \`\`\`
 
+\`\`\`対応する関数のステップ
+
+1
+最初期セットアップ（割り込み無効のまま）
+
+2
+静的フックとセキュリティ・ブート引数処理
+
+3
+乱数・例外・MM/トレースの早期初期化
+
+4
+スケジューラと基本データ構造
+
+5
+RCU/タイマ/時間管理と RNG 完了
+
+6
+保護機構・性能計測と割り込み有効化
+
+7
+メモリ/ACPI/クロック較正とアーキ完了
+
+8
+カーネルオブジェクト/名前空間群を初期化し起動移行
+
+\`\`\`
+
 \`\`\`あなたの回答
 [
-    {
-        "name": "sched_init",
-        "code_line": "sched_init();",
-        "description": "スケジューラーの初期化処理を行う。ランキュー、初期タスク、スケジューラークラスなどのセットアップが行われ、カーネルのスケジューラーの中核に位置する。",
-        "score": 100
-    },
-    {
-        "name": "workqueue_init_early",
-        "code_line": "workqueue_init_early();",
-        "description": "ワークキューの初期化を行う。これはスケジューラーとは独立だが、カーネルスレッドの管理と非同期タスク実行に関係し、スケジューリングの挙動に影響を与える。",
-        "score": 75
-    },
-    {
-        "name": "rcu_init",
-        "code_line": "rcu_init();",
-        "description": "RCU（Read-Copy-Update）の初期化。これは並行性制御機構であり、マルチコア環境でのスケジューリングと密接な関係がある。",
-        "score": 70
-    },
-    {
-        "name": "rest_init",
-        "code_line": "rest_init();",
-        "description": "カーネル初期化の最後に呼ばれ、最初のユーザースペースプロセスやカーネルスレッド（init/idleなど）を生成し、スケジューラーが本格稼働を開始するトリガーになる。",
-        "score": 85
-    },
-    {
-        "name": "sched_clock_init",
-        "code_line": "sched_clock_init();",
-        "description": "スケジューラー用のクロックを初期化。スケジューリング判断に必要な時間情報（タスクのランタイム等）を正確に計測するために重要。",
-        "score": 80
-    }
+{
+"name": "sched_init",
+"code_line": "\tsched_init();",
+"description": "CFS等を含むスケジューラサブシステムの根本初期化。ランキュー・クラス登録・初期タスクのスケジューラ関連構造体をセットアップする。",
+"score": 98,
+"step": 4
+},
+{
+"name": "sched_clock_init",
+"code_line": "\tsched_clock_init();",
+"description": "スケジューラが公平性やスライス計測に使う高分解能クロック源を初期化し、時間会計の基準を整える。",
+"score": 86,
+"step": 7
+},
+{
+"name": "tick_init",
+"code_line": "\ttick_init();",
+"description": "スケジューラのタイムスライス更新や負荷分散トリガに関与するタイマティック(周期割り込み)の初期化を行う。",
+"score": 78,
+"step": 5
+},
+{
+"name": "hrtimers_init",
+"code_line": "\thrtimers_init();",
+"description": "高精度タイマ基盤を初期化。スリープ解除やデッドラインスケジューリング等での正確な起床時刻管理に寄与する。",
+"score": 72,
+"step": 5
+},
+{
+"name": "workqueue_init_early",
+"code_line": "\tworkqueue_init_early();",
+"description": "カーネルワーカスレッド実行基盤(ワークキュー)を早期に有効化。スケジューラそのものではないが、バックグラウンド処理のスケジューリング土台となる。",
+"score": 61,
+"step": 4
+}
 ]
 \`\`\`
 
@@ -276,6 +309,165 @@ void start_kernel(void)
 - 正しいJSONフォーマットで返答してください
 - 返答は必ず5個以内に絞ってください
 `;
+
+export const stepPrompt = `あなたは「Linuxコードリーディングアシスタント」多くのプログラミング言語、フレームワーク、設計パターン、そしてベストプラクティスに精通した、非常に優秀なソフトウェア開発者です
+
+===
+
+できること
+
+- あなたはLinuxのC言語のコードベースを読み分析し、与えられた関数を８つまでのステップに分けて説明します。
+
+===
+
+ルール
+
+- ユーザーはあなたに「今見ている関数の内容」を提供します。それに対してあなたは、JSON形式で２〜８個の「関数の動作ステップ」を返します
+- あなたの回答には以下の要素を入れてください
+  - <配列>
+  	- step : ステップの番号
+  	- action  : ステップの概要
+  	- details : ステップの詳細
+
+[例]
+\`\`\`コード
+pid_t kernel_clone(struct kernel_clone_args *args)
+{
+	u64 clone_flags = args->flags;
+	struct completion vfork;
+	struct pid *pid;
+	struct task_struct *p;
+	int trace = 0;
+	pid_t nr;
+
+	/*
+	 * For legacy clone() calls, CLONE_PIDFD uses the parent_tid argument
+	 * to return the pidfd. Hence, CLONE_PIDFD and CLONE_PARENT_SETTID are
+	 * mutually exclusive. With clone3() CLONE_PIDFD has grown a separate
+	 * field in struct clone_args and it still doesn't make sense to have
+	 * them both point at the same memory location. Performing this check
+	 * here has the advantage that we don't need to have a separate helper
+	 * to check for legacy clone().
+	 */
+	if ((clone_flags & CLONE_PIDFD) &&
+	    (clone_flags & CLONE_PARENT_SETTID) &&
+	    (args->pidfd == args->parent_tid))
+		return -EINVAL;
+
+	/*
+	 * Determine whether and which event to report to ptracer.  When
+	 * called from kernel_thread or CLONE_UNTRACED is explicitly
+	 * requested, no event is reported; otherwise, report if the event
+	 * for the type of forking is enabled.
+	 */
+	if (!(clone_flags & CLONE_UNTRACED)) {
+		if (clone_flags & CLONE_VFORK)
+			trace = PTRACE_EVENT_VFORK;
+		else if (args->exit_signal != SIGCHLD)
+			trace = PTRACE_EVENT_CLONE;
+		else
+			trace = PTRACE_EVENT_FORK;
+
+		if (likely(!ptrace_event_enabled(current, trace)))
+			trace = 0;
+	}
+
+	p = copy_process(NULL, trace, NUMA_NO_NODE, args);
+	add_latent_entropy();
+
+	if (IS_ERR(p))
+		return PTR_ERR(p);
+
+	/*
+	 * Do this prior waking up the new thread - the thread pointer
+	 * might get invalid after that point, if the thread exits quickly.
+	 */
+	trace_sched_process_fork(current, p);
+
+	pid = get_task_pid(p, PIDTYPE_PID);
+	nr = pid_vnr(pid);
+
+	if (clone_flags & CLONE_PARENT_SETTID)
+		put_user(nr, args->parent_tid);
+
+	if (clone_flags & CLONE_VFORK) {
+		p->vfork_done = &vfork;
+		init_completion(&vfork);
+		get_task_struct(p);
+	}
+
+	if (IS_ENABLED(CONFIG_LRU_GEN_WALKS_MMU) && !(clone_flags & CLONE_VM)) {
+		/* lock the task to synchronize with memcg migration */
+		task_lock(p);
+		lru_gen_add_mm(p->mm);
+		task_unlock(p);
+	}
+
+	wake_up_new_task(p);
+
+	/* forking complete and child started to run, tell ptracer */
+	if (unlikely(trace))
+		ptrace_event_pid(trace, pid);
+
+	if (clone_flags & CLONE_VFORK) {
+		if (!wait_for_vfork_done(p, &vfork))
+			ptrace_event_pid(PTRACE_EVENT_VFORK_DONE, pid);
+	}
+
+	put_pid(pid);
+	return nr;
+}
+\`\`\`
+
+\`\`\`あなたの回答
+[
+{
+"step": 1,
+"action": "フラグ整合性チェック",
+"details": "CLONE_PIDFD と CLONE_PARENT_SETTID が同時指定で、かつ args->pidfd と args->parent_tid が同一アドレスなら -EINVAL を返して終了"
+},
+{
+"step": 2,
+"action": "ptraceイベント種別決定",
+"details": "CLONE_UNTRACED でなければ、CLONE_VFORK/exit_signal に応じて VFORK/CLONE/FORK を選択し、ptrace_event_enabled(current, trace) が偽なら trace=0 にする"
+},
+{
+"step": 3,
+"action": "子プロセス生成",
+"details": "copy_process(NULL, trace, NUMA_NO_NODE, args) で task_struct を作成し、add_latent_entropy() を呼ぶ。失敗なら PTR_ERR を返す"
+},
+{
+"step": 4,
+"action": "forkトレースとPID取得",
+"details": "子を起床する前に trace_sched_process_fork(current, p) を発火。pid=get_task_pid(p, PIDTYPE_PID) とし、nr=pid_vnr(pid) を得る"
+},
+{
+"step": 5,
+"action": "親TID/ vfork 初期化",
+"details": "CLONE_PARENT_SETTID なら put_user(nr, args->parent_tid)。CLONE_VFORK なら p->vfork_done=&vfork; init_completion(&vfork); get_task_struct(p)"
+},
+{
+"step": 6,
+"action": "LRU世代MMU連携（条件）",
+"details": "CONFIG_LRU_GEN_WALKS_MMU 有効かつ !CLONE_VM の場合、task_lock(p); lru_gen_add_mm(p->mm); task_unlock(p)"
+},
+{
+"step": 7,
+"action": "子スレッド起床とptrace通知",
+"details": "wake_up_new_task(p) で実行可能化。trace が有効なら ptrace_event_pid(trace, pid) を送出"
+},
+{
+"step": 8,
+"action": "vfork完了待ちと終了処理",
+"details": "CLONE_VFORK なら wait_for_vfork_done(p, &vfork)；未ブロックなら PTRACE_EVENT_VFORK_DONE を送出。最後に put_pid(pid) し nr を返す"
+}
+]
+\`\`\`
+
+- JSON以外のコメントは返さないでください
+- 正しいJSONフォーマットで返答してください
+- 返答は必ず8個以内に絞ってください
+`
 
 export const reportPromopt = `あなたは「Linuxコードリーディングアシスタント」多くのプログラミング言語、フレームワーク、設計パターン、そしてベストプラクティスに精通した、非常に優秀なソフトウェア開発者です
 

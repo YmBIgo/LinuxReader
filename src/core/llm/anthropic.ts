@@ -28,12 +28,15 @@ export class AnthropicHandler implements LLMModel {
       if (type === "text") {
         if (isJSON) {
           JSON.parse(
-            response.content[0].text.replace("```json", "").replace(/```/g, "")
+            response.content[0].text.replace("```json", "")
+            .replace(/```/g, "")
+            .replace(/	/g, "\\t")
           );
         }
         return response.content[0].text
           .replace("```json", "")
-          .replace(/```/g, "");
+          .replace(/```/g, "")
+          .replace(/	/g, "\\t");
       } else if (type === "web_search_tool_result") {
         return Array.isArray(response.content[0].content)
           ? response.content[0].content[0].encrypted_content

@@ -21,6 +21,7 @@ import {
   mermaidPrompt,
   pickCandidatePromopt,
   reportPromopt,
+  stepPrompt,
 } from "./prompt/index_ja";
 import pWaitFor from "p-wait-for";
 import { is7wordString } from "./util/number";
@@ -292,6 +293,43 @@ export class LinuxReader {
     this.runTask(currentFilePath, functionContent);
   }
   private async runTask(currentFilePath: string, functionContent: string) {
+    this.saySocket("まずは関数の動作ステップを解析します...");
+    const userStepPrompt = `
+\`\`\`code
+${functionContent}
+\`\`\``;
+    const stepHistory: Anthropic.Messages.MessageParam[] = [
+      { role: "user", content: userStepPrompt },
+    ];
+    let stepResponseJson;
+    try {
+      const response = (await this.apiHandler?.createMessage(
+        stepPrompt,
+        stepHistory,
+        true
+      )) ?? "{}"
+      stepResponseJson = JSON.parse(response);
+    } catch(e) {
+      console.error(e);
+      this.sendErrorSocket(`APIエラー`);
+      this.saveChoiceTree();
+      return;
+    }
+    if (!Array.isArray(stepResponseJson)) {
+      console.error("respond JSON format is not Array...");
+      this.sendErrorSocket(`返ってきた情報が間違っています...`);
+      this.saveChoiceTree();
+      return;
+    }
+    let stepDetails: string = "以下が関数の動作ステップです。\n----------------------------\n";
+    let stepActions: string = "";
+    stepResponseJson.forEach((s) => {
+      if (!s) return;
+      stepDetails += `${s.step} : ${s.action}\n${s.details}\n\n`;
+      stepActions += `${s.step}\n${s.action}\n\n`
+    });
+    this.saySocket(`${stepDetails}`);
+    this.saySocket("次にジャンプする関数候補を出します...");
     const userPrompt = `
 \`\`\`purpose
 ${this.purpose}
@@ -299,12 +337,16 @@ ${this.purpose}
 
 \`\`\`code
 ${functionContent}
+\`\`\`
+
+\`\`\`steps
+${stepActions}
 \`\`\``;
     console.log(userPrompt);
     const history: Anthropic.Messages.MessageParam[] = [
       { role: "user", content: userPrompt },
     ];
-    let responseJSON: string;
+    let responseJSON;
     try {
       const response =
         (await this.apiHandler?.createMessage(
@@ -419,6 +461,9 @@ ${functionContent}
       askQuestion += `Whole Code Line : ${fileCodeLine}\n`;
       askQuestion += `Original Code : ${each_r.code_line}\n`;
       askQuestion += `Confidence : ${each_r.score}\n`;
+      if(!isNaN(Number(each_r.step)) && stepResponseJson[Number(each_r.step - 1)]){
+        askQuestion += `Step : ${each_r.step} ${stepResponseJson[Number(each_r.step - 1)].action}\n`;
+      }
       askQuestion += `----------------------------\n`;
       newHistoryChoices.push({
         functionName: each_r.name,
