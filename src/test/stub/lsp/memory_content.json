@@ -13,5 +13,21 @@
         "firstLine": "\\tif (copy_mc_user_highpage(&new_folio->page, page, addr, src_vma))",
         "content": "",
         "skipGetFunction": true
+    },
+    {
+        "line": 3377,
+        "character": 25,
+        "functionName": "vmf->vma->vm_ops->page_mkwrite",
+        "firstLine": "\tret = vmf->vma->vm_ops->page_mkwrite(vmf);",
+        "content":"",
+        "skipGetFunction": true
+    },
+    {
+        "line": 2133,
+        "character": 36,
+        "functionName": "vma->vm_ops->pfn_mkwrite",
+        "firstLine": "\t\tret = vma->vm_ops->pfn_mkwrite(vmf);",
+        "content": "",
+        "skipGetFunction": true
     }
 ]

@@ -92,7 +92,7 @@ export async function getFileLineAndCharacterFromFunctionName(
   const wholeFunctionName = !memberAccessFunctionName.includes("(") && memberAccessFunction.length === 1
     ? memberAccessFunctionName + "("
     : memberAccessFunction.length > 1
-    ? memberAccessFunctionName + ")"
+    ? "->" + memberAccessFunctionName
     : memberAccessFunctionName;
   const splittedWholeFunctionName = wholeFunctionName.split(",")[0].replace(/^[\s\t]*/g, "");
   const simplfiedFunctionName = isFirst || memberAccessFunction.length > 1
@@ -155,7 +155,11 @@ export async function getFileLineAndCharacterFromFunctionName(
     }
     let functionIndex = row.indexOf(simplfiedFunctionName[0]);
     if (!isFirst && functionIndex >= 0) {
-      functionIndex += 1;
+      if (memberAccessFunction.length > 1) {
+        functionIndex += 2;
+      } else {
+        functionIndex += 1;
+      }
     }
     if (functionIndex === -1 && simplfiedFunctionName.length > 1) {
       for (let i = 1; i < simplfiedFunctionName.length; i++) {
@@ -163,7 +167,7 @@ export async function getFileLineAndCharacterFromFunctionName(
         if (functionIndex >= 0) {
           if (i > 1 || isFirst) {
             functionIndex += 2;
-          } else {
+          }else {
             functionIndex += 1;
           }
           break;

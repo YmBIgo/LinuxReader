@@ -75,5 +75,5 @@ suite('Extension LSP', () => {
             assert.strictEqual(currentFileContent.line, line);
             assert.strictEqual(currentFileContent.character, character);
         }
-    })
+    });
 });
