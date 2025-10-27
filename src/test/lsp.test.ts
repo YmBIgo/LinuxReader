@@ -5,6 +5,7 @@ import {
 } from "../core/lsp";
 import fork_content from "./stub/lsp/fork_content.json";
 import memory_content from "./stub/lsp/memory_content.json";
+import mmap_content from "./stub/lsp/mmap_content.json";
 import path from "path";
 
 // please edit pathToYourDirectory when you want to test it.
@@ -76,4 +77,20 @@ suite('Extension LSP', () => {
             assert.strictEqual(currentFileContent.character, character);
         }
     });
+    // mmap.c
+    test('getFileLineAndCharacterFromFunctionName mmap.c', async() => {
+        const stubFilePath = path.resolve(pathToYourDirectory, "src", "test", "stub", "lsp", "mmap.c");
+        for (let i = 0; i < mmap_content.length; i++) {
+            const currentFileContent = mmap_content[i];
+            const [line, character] = await getFileLineAndCharacterFromFunctionName(
+                stubFilePath,
+                currentFileContent.functionName,
+                currentFileContent.functionName,
+                false,
+                true,
+            );
+            assert.strictEqual(currentFileContent.line, line);
+            assert.strictEqual(currentFileContent.character, character);
+        }
+    })
 });

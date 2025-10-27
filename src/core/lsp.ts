@@ -109,14 +109,14 @@ export async function getFileLineAndCharacterFromFunctionName(
       "\t*" + splittedWholeFunctionName,
     ];
   const searchNameOnlyFunctionName = isSearchNameOnly
-  ?
-  [
-    "(" + splittedWholeFunctionName,
-    ")" + splittedWholeFunctionName,
-    "!" + splittedWholeFunctionName
-  ]
-  :
-  []
+    ?
+    [
+      "(" + splittedWholeFunctionName,
+      ")" + splittedWholeFunctionName,
+      "!" + splittedWholeFunctionName
+    ]
+    :
+    [];
   const fileContentArray = fileContent.split("\n");
   let isLongComment = false;
   for (let i in fileContentArray) {
@@ -177,7 +177,6 @@ export async function getFileLineAndCharacterFromFunctionName(
       // such like `copy_p4d_range`
       if (row.startsWith(splittedWholeFunctionName)) {
         functionIndex = 0;
-        index -= 1;
       }
       // if user only want to search function name, care it.
       if (functionIndex === -1 && searchNameOnlyFunctionName.length !== 0) {
