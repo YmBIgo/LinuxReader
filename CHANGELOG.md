@@ -4,6 +4,10 @@ All notable changes to the "linux-reader" extension will be documented in this f
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## 1.0.11
+
+- 概念ステップ説明を実装
+
 ## 1.0.10
 
 - 「->」対応のバグと改行含みの関数の位置取得のバグ修正
