@@ -4,6 +4,10 @@ All notable changes to the "linux-reader" extension will be documented in this f
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## 1.0.12
+
+- コメント機能追加
+
 ## 1.0.11
 
 - 概念ステップ説明を実装
