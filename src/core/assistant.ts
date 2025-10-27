@@ -469,6 +469,7 @@ ${stepActions}
         functionName: each_r.name,
         functionCodeLine: fileCodeLine,
         originalFilePath: currentFilePath,
+        comment: each_r.description,
       });
     });
     let resultNumber = 0;
@@ -526,6 +527,11 @@ ${stepActions}
       }
     }
     if (is7wordString(result.ask)) {
+      const isHistoryInteractive = await this.askSocket("最初から順番に再現したい場合はyesを、該当箇所のみは任意の文字を入力してください");
+      if (isHistoryInteractive.ask === "yes") {
+        await this.runIntercativeHistoryPoint(result.ask);
+        return;
+      }
       await this.runHistoryPoint(result.ask);
       return;
     }
@@ -574,7 +580,7 @@ ${stepActions}
     })
     // this.historyHanlder?.addHistory(newHistoryChoices);
     this.jumpToCode(removeFilePrefixFromFilePath(newFile), newFunctionContent);
-    this.historyHanlder?.choose(resultNumber, newFunctionContent);
+    this.historyHanlder?.choose(resultNumber, newFunctionContent, responseJSON[resultNumber].description);
     this.saySocket(
       `LLMは ${newFile}@${newLine}:${newCharacter} を検索しています`
     );
@@ -650,8 +656,10 @@ ${stepActions}
         }
         functionResult = newFileContent;
       }
+      let comment: string = "";
       const foundCallback = (st: ChoiceTree) => {
         st.content.functionCodeContent = functionResult ?? functionCodeLine;
+        if (st.content.comment) comment = st.content.comment;
       }
       this.historyHanlder?.moveById(id.slice(0, 7), foundCallback);
       if (searchResult.pos.length === i + 1) {
@@ -660,6 +668,9 @@ ${stepActions}
       if (functionResult) {
         this.saySocket("選択されたコードにジャンプします ...")
         this.jumpToCode(originalFilePath, functionResult);
+      }
+      if (comment) {
+        this.saySocket(comment);
       }
       let resultString = ""
       for(;;) {
@@ -706,10 +717,13 @@ ${stepActions}
       filePath = newFile;
       functionResult = newFileContent;
     }
+    let comment: string = "";
     const foundCallback = (st: ChoiceTree) => {
       st.content.functionCodeContent = functionResult ?? functionCodeLine;
+      if (st.content.comment) comment = st.content.comment;
     }
     this.historyHanlder?.moveById(historyHash, foundCallback);
+    if (comment) this.saySocket(comment);
     await this.jumpToCode(removeFilePrefixFromFilePath(filePath), functionResult ?? functionCodeLine);
     this.runTask(removeFilePrefixFromFilePath(filePath), functionResult ?? functionCodeLine);
   }
