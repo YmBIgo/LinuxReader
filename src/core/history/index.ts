@@ -120,7 +120,7 @@ export class HistoryHandler {
     }
     moveById(
         id: string,
-        foundCallback?: (st: ChoiceTree) => void
+        foundCallback?: (st: ChoiceTree, comment: string) => void
     ): Choice | null {
         const searchResult = this.searchTreeById(this.choiceTree, id, 0, 0, [], foundCallback);
         if (!searchResult || !searchResult.pos.length) {
@@ -160,7 +160,8 @@ export class HistoryHandler {
         depth: number,
         width: number,
         searchPath: ChoicePosition[],
-        foundCallback?: (st: ChoiceTree) => void,
+        foundCallback?: (st: ChoiceTree, comment: string) => void,
+        isFirstFound = true,
     ): {pos: ChoicePosition[], processChoice: Choice} | null {
         const newSearchPath = [...searchPath, {depth, width}];
         const isSame = searchChoiceTree.content.id.slice(0, 7) === id;
@@ -169,11 +170,12 @@ export class HistoryHandler {
         }
         let res = null;
         searchChoiceTree.children.forEach((st, index) => {
-            const result = this.searchTreeById(st, id, depth+1, index, newSearchPath);
+            const result = this.searchTreeById(st, id, depth+1, index, newSearchPath, foundCallback, isFirstFound);
             if (result) {
                 res = result;
-                if (foundCallback) {
-                    foundCallback(st);
+                if (foundCallback && isFirstFound) {
+                    foundCallback(st, res.processChoice.comment ?? "");
+                    isFirstFound = false;
                 }
             }
         });
@@ -186,7 +188,7 @@ export class HistoryHandler {
     }
     private printTree(tree: ChoiceTree, prefix: string = "") {
         this.visualizeResult += `${prefix}|${tree.content.functionName}
-${prefix}|${tree.content.id.slice(0, 7)} ${tree.content.comment ? `\n${prefix}  ${tree.content.comment.slice(0, 30)}...` : ""}
+${prefix}|${tree.content.id.slice(0, 7)}${tree.content.comment ? `\n${prefix}  ${tree.content.comment.slice(0, 30)}...` : ""}
 
 `;
         for (let child of tree.children) {

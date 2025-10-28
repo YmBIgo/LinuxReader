@@ -462,7 +462,7 @@ ${stepActions}
       askQuestion += `Original Code : ${each_r.code_line}\n`;
       askQuestion += `Confidence : ${each_r.score}\n`;
       if(!isNaN(Number(each_r.step)) && stepResponseJson[Number(each_r.step - 1)]){
-        askQuestion += `Step : ${each_r.step} ${stepResponseJson[Number(each_r.step - 1)].action}\n`;
+        askQuestion += `Step : ${each_r.score} | ${each_r.step} ${stepResponseJson[Number(each_r.step - 1)].action}\n`;
       }
       askQuestion += `----------------------------\n`;
       newHistoryChoices.push({
@@ -578,7 +578,8 @@ ${stepActions}
       } 
       return hc
     })
-    // this.historyHanlder?.addHistory(newHistoryChoices);
+    // historyのパスは検索後に確定する
+    this.historyHanlder?.addHistory(newHistoryChoices);
     this.jumpToCode(removeFilePrefixFromFilePath(newFile), newFunctionContent);
     this.historyHanlder?.choose(resultNumber, newFunctionContent, responseJSON[resultNumber].description);
     this.saySocket(
@@ -657,9 +658,9 @@ ${stepActions}
         functionResult = newFileContent;
       }
       let comment: string = "";
-      const foundCallback = (st: ChoiceTree) => {
+      const foundCallback = (st: ChoiceTree, comment2: string) => {
         st.content.functionCodeContent = functionResult ?? functionCodeLine;
-        if (st.content.comment) comment = st.content.comment;
+        if (st.content.comment) comment = comment2;
       }
       this.historyHanlder?.moveById(id.slice(0, 7), foundCallback);
       if (searchResult.pos.length === i + 1) {
@@ -718,9 +719,9 @@ ${stepActions}
       functionResult = newFileContent;
     }
     let comment: string = "";
-    const foundCallback = (st: ChoiceTree) => {
+    const foundCallback = (st: ChoiceTree, comment2: string) => {
       st.content.functionCodeContent = functionResult ?? functionCodeLine;
-      if (st.content.comment) comment = st.content.comment;
+      if (st.content.comment) comment = comment2;
     }
     this.historyHanlder?.moveById(historyHash, foundCallback);
     if (comment) this.saySocket(comment);
