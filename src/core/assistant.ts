@@ -462,18 +462,23 @@ ${stepActions}
       askQuestion += `Original Code : ${each_r.code_line}\n`;
       askQuestion += `Confidence : ${each_r.score}\n`;
       if(!isNaN(Number(each_r.step)) && stepResponseJson[Number(each_r.step - 1)]){
-        askQuestion += `Step : ${each_r.score} | ${each_r.step} ${stepResponseJson[Number(each_r.step - 1)].action}\n`;
+        askQuestion += `Step : ${each_r.step} ${stepResponseJson[Number(each_r.step - 1)].action}\n`;
       }
       askQuestion += `----------------------------\n`;
       newHistoryChoices.push({
         functionName: each_r.name,
         functionCodeLine: fileCodeLine,
         originalFilePath: currentFilePath,
-        comment: each_r.description,
+        comment: each_r.score + " | " + each_r.description,
       });
     });
     let resultNumber = 0;
     let result: AskResponse | null = null;
+    const oldPosition = this.historyHanlder?.getCurrentChoicePosition();
+    this.historyHanlder?.addHistory(newHistoryChoices);
+    if (oldPosition && oldPosition.length){
+       this.historyHanlder?.move(oldPosition);
+    }
     this.saySocket(`${askQuestion}`);
     for (;;) {
       result = await this.askSocket(`
@@ -545,7 +550,6 @@ ${stepActions}
       );
       return;
     }
-    this.historyHanlder?.addHistory(newHistoryChoices);
     this.saySocket(
       `Clangdは "${responseJSON[resultNumber].name}" を検索しています`
     );

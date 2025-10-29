@@ -115,7 +115,7 @@ export class HistoryHandler {
         }
         return currentTree;
     }
-    private move(selectedChoicePosition: ChoicePosition[]) {
+    move(selectedChoicePosition: ChoicePosition[]) {
         this.currentChoicePosition = selectedChoicePosition;
     }
     moveById(
