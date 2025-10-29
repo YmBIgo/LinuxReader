@@ -2,7 +2,7 @@
   "name": "linux-reader",
   "displayName": "linux-reader",
   "description": " Linux のソースコードをLLMと一緒に効率的に読むための VSCode 拡張",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "type": "commonjs",
   "icon": "logo.png",
   "engines": {
