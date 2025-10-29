@@ -30,6 +30,8 @@ export class HistoryHandler {
     private choiceTree: ChoiceTree;
     private currentChoicePosition: ChoicePosition[];
     private visualizeResult: string;
+    // 並列を気にしなければならなくなったら、isFirstSearchFoundを修正する 
+    private isFirstSearchFound: boolean;
     constructor(rootPath: string, rootFunctionName: string, rootFunctionCodeLine: string, rootFunctionContent: string) {
         this.rootPath = rootPath;
         const rootChoice: Choice = {
@@ -45,6 +47,7 @@ export class HistoryHandler {
         };
         this.currentChoicePosition = [{depth: 0, width: 0}];
         this.visualizeResult = "";
+        this.isFirstSearchFound = false;
     }
     overWriteChoiceTree(choiceTree: ChoiceTree) {
         this.choiceTree = choiceTree;
@@ -128,6 +131,7 @@ export class HistoryHandler {
             return null;
         }
         this.move(searchResult.pos);
+        this.isFirstSearchFound = true;
         return searchResult.processChoice;
     }
     getContentFromPos(
@@ -161,7 +165,6 @@ export class HistoryHandler {
         width: number,
         searchPath: ChoicePosition[],
         foundCallback?: (st: ChoiceTree, comment: string) => void,
-        isFirstFound = true,
     ): {pos: ChoicePosition[], processChoice: Choice} | null {
         const newSearchPath = [...searchPath, {depth, width}];
         const isSame = searchChoiceTree.content.id.slice(0, 7) === id;
@@ -170,12 +173,13 @@ export class HistoryHandler {
         }
         let res = null;
         searchChoiceTree.children.forEach((st, index) => {
-            const result = this.searchTreeById(st, id, depth+1, index, newSearchPath, foundCallback, isFirstFound);
+            const result = this.searchTreeById(st, id, depth+1, index, newSearchPath, foundCallback);
             if (result) {
                 res = result;
-                if (foundCallback && isFirstFound) {
+                if (foundCallback && this.isFirstSearchFound) {
+                    console.log("found!", res.processChoice.functionName);
                     foundCallback(st, res.processChoice.comment ?? "");
-                    isFirstFound = false;
+                    this.isFirstSearchFound = false;
                 }
             }
         });

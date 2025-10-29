@@ -585,7 +585,11 @@ ${stepActions}
     // historyのパスは検索後に確定する
     this.historyHanlder?.addHistory(newHistoryChoices);
     this.jumpToCode(removeFilePrefixFromFilePath(newFile), newFunctionContent);
-    this.historyHanlder?.choose(resultNumber, newFunctionContent, responseJSON[resultNumber].description);
+    this.historyHanlder?.choose(
+      resultNumber,
+      newFunctionContent,
+      responseJSON[resultNumber].score +  " | " + responseJSON[resultNumber].description
+    );
     this.saySocket(
       `LLMは ${newFile}@${newLine}:${newCharacter} を検索しています`
     );
@@ -593,6 +597,7 @@ ${stepActions}
   }
 
   private async jumpToCode(currentFilePath: string, functionContent: string) {
+    console.log("Opening file", currentFilePath, functionContent.slice(0, 30));
     try {
       const openDoc = await vscode.workspace.openTextDocument(
         currentFilePath
@@ -636,6 +641,9 @@ ${stepActions}
       return;
     }
     for (let i = 0; i < searchResult.pos.length; i++) {
+      if (searchResult.pos.length === i + 1) {
+        break;
+      }
       const pos = searchResult.pos.slice(0, i + 1);
       const currentRunConfig = this.historyHanlder?.getContentFromPos(pos);
       if (!currentRunConfig) {
@@ -644,6 +652,7 @@ ${stepActions}
       }
       const { functionCodeContent, functionCodeLine, functionName, originalFilePath, id } = currentRunConfig;
       let functionResult = functionCodeContent;
+      let filePath = originalFilePath;
       if (!functionCodeContent) {
         const [line, character] = await getFileLineAndCharacterFromFunctionName(originalFilePath, functionCodeLine, functionName, false);
         if (line === -1 && character === -1) {
@@ -660,19 +669,18 @@ ${stepActions}
           return;
         }
         functionResult = newFileContent;
+        filePath = removeFilePrefixFromFilePath(newFile);
       }
       let comment: string = "";
       const foundCallback = (st: ChoiceTree, comment2: string) => {
         st.content.functionCodeContent = functionResult ?? functionCodeLine;
         if (st.content.comment) comment = comment2;
+        if (filePath !== originalFilePath) st.content.originalFilePath = filePath;
       }
       this.historyHanlder?.moveById(id.slice(0, 7), foundCallback);
-      if (searchResult.pos.length === i + 1) {
-        break;
-      }
       if (functionResult) {
         this.saySocket("選択されたコードにジャンプします ...")
-        this.jumpToCode(originalFilePath, functionResult);
+        this.jumpToCode(filePath, functionResult);
       }
       if (comment) {
         this.saySocket(comment);
@@ -719,18 +727,19 @@ ${stepActions}
         this.saveChoiceTree();
         return;
       }
-      filePath = newFile;
+      filePath = removeFilePrefixFromFilePath(newFile);
       functionResult = newFileContent;
     }
     let comment: string = "";
     const foundCallback = (st: ChoiceTree, comment2: string) => {
       st.content.functionCodeContent = functionResult ?? functionCodeLine;
       if (st.content.comment) comment = comment2;
+      if (filePath !== originalFilePath) st.content.originalFilePath = filePath;
     }
     this.historyHanlder?.moveById(historyHash, foundCallback);
     if (comment) this.saySocket(comment);
-    await this.jumpToCode(removeFilePrefixFromFilePath(filePath), functionResult ?? functionCodeLine);
-    this.runTask(removeFilePrefixFromFilePath(filePath), functionResult ?? functionCodeLine);
+    await this.jumpToCode(filePath, functionResult ?? functionCodeLine);
+    this.runTask(filePath, functionResult ?? functionCodeLine);
   }
 
   private async getReport() {
