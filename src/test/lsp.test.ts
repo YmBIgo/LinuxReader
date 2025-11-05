@@ -6,6 +6,8 @@ import {
 import fork_content from "./stub/lsp/fork_content.json";
 import memory_content from "./stub/lsp/memory_content.json";
 import mmap_content from "./stub/lsp/mmap_content.json";
+import elf_content from "./stub/lsp/elf_h_content.json";
+import pgtable_content from "./stub/lsp/pgtable_h_content.json"
 import path from "path";
 
 // please edit pathToYourDirectory when you want to test it.
@@ -35,6 +37,32 @@ suite('Extension LSP', () => {
         for (let i = 0; i < memory_content.length; i++) {
             const currentFileContent = memory_content[i];
             if (currentFileContent.skipGetFunction) continue;
+            const functionContent = await getFunctionContentFromLineAndCharacter(
+                stubFilePath,
+                currentFileContent.line,
+                currentFileContent.character
+            );
+            assert.strictEqual(functionContent, currentFileContent.content);
+        }
+    });
+    // elf.h
+    test('getFunctionContentFromLineAndCharacter elf.h', async() =>{
+        const stubFilePath = path.resolve(pathToYourDirectory, "src", "test", "stub", "lsp", "elf.h");
+        for (let i = 0; i < elf_content.length; i++) {
+            const currentFileContent = elf_content[i];
+            const functionContent = await getFunctionContentFromLineAndCharacter(
+                stubFilePath,
+                currentFileContent.line,
+                currentFileContent.character
+            );
+            assert.strictEqual(functionContent, currentFileContent.content);
+        }
+    });
+    // pgtable.h
+    test('getFunctionContentFromLineAndCharacter pgtable.h', async() => {
+        const stubFilePath = path.resolve(pathToYourDirectory, "src", "test", "stub", "lsp", "pgtable.h");
+        for (let i = 0; i < pgtable_content.length; i++) {
+            const currentFileContent = pgtable_content[i];
             const functionContent = await getFunctionContentFromLineAndCharacter(
                 stubFilePath,
                 currentFileContent.line,
@@ -92,5 +120,5 @@ suite('Extension LSP', () => {
             assert.strictEqual(currentFileContent.line, line);
             assert.strictEqual(currentFileContent.character, character);
         }
-    })
+    });
 });

@@ -18,6 +18,22 @@ export async function getFunctionContentFromLineAndCharacter(
   const failSafeFileContent = fileContentSplit
     .slice(line, line + 20)
     .join("\n");
+  // care #define
+  const isFileStartWithDefine = fileContentStart[0].startsWith("#define");
+  const defineName = /#define\s([a-zA-Z0-9_]+)\s/g.exec(fileContentStart[0])?.[1] || "not matched";
+  if (isFileStartWithDefine) {
+    const isNotDefine = fileContentSplit
+      .slice(line + 1, line + 20)
+      .findIndex((l) => l.includes(" " + defineName));
+    if (isNotDefine === -1) {
+      const backSlashPos = fileContentSplit
+        .slice(line, line+40)
+        .findIndex((f) => !f.endsWith("\\"));
+      let fixedBackSlashPos = backSlashPos <= -1 ? 0 : backSlashPos;
+      const backSlashConsideredDefine = fileContentStart.slice(0, fixedBackSlashPos + 1);
+      return backSlashConsideredDefine.join("\n");
+    }
+  }
   if (!failSafeFileContent.includes("{")) {
     return fileContentSplit.slice(line, line + 5).join("\n");
   }

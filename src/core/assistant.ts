@@ -482,7 +482,7 @@ ${stepActions}
     this.saySocket(`${askQuestion}`);
     for (;;) {
       result = await this.askSocket(`
-表示したい詳細のインデックスを入力してください。
+表示したい詳細のインデックス（0〜4）を入力してください。
   - 5 を入力すると再試行できます
   - 6 を入力すると履歴を木構造で表示します
   - 7 を入力すると探索レポートを生成します
@@ -532,7 +532,7 @@ ${stepActions}
       }
     }
     if (is7wordString(result.ask)) {
-      const isHistoryInteractive = await this.askSocket("最初から順番に再現したい場合はyesを、該当箇所のみは任意の文字を入力してください");
+      const isHistoryInteractive = await this.askSocket("最初から順番に再現したい場合はyesを、該当箇所のみ見たい場合は任意の文字を入力してください");
       if (isHistoryInteractive.ask === "yes") {
         await this.runIntercativeHistoryPoint(result.ask);
         return;
