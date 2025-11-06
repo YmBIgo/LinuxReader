@@ -18,7 +18,7 @@ const BACK_PHASE_NUMBER = [1, 2, 3, 6, 7];
 const SHOW_HISTORY_NUMBER = [0, 1, 2];
 const INPUT_PHASE_TEXT = [
   "「検索したいファイルパス」を入力してください", // 0
-  "次は「検索したい関数名の１行」を入力してください", // 1
+  "次は「検索したい関数名の１行目」を入力してください", // 1
   "次は「目的」を入力してください", // 2
   "タスクを開始する場合は、下の「タスクを開始する」ボタンを押してください", // 3
   "", // 4
@@ -50,7 +50,7 @@ const ChatView: React.FC<ChatViewType> = ({
   const task =
     rootPath && rootFunctionName && purpose
       ? `検索したいファイルパス : ${rootPath}
-検索する関数の１行: ${rootFunctionName}
+検索する関数の１行目: ${rootFunctionName}
 目的: ${purpose}`
       : "タスクは開始されていません";
 
@@ -60,7 +60,7 @@ const ChatView: React.FC<ChatViewType> = ({
     inputPhase === 0
       ? "検索したいファイルパスを入力"
       : inputPhase === 1
-      ? "検索する関数の１行を入力"
+      ? "検索する関数の１行目を入力"
       : inputPhase === 2
       ? "目的を入力"
       : inputPhase === 3
@@ -114,7 +114,7 @@ const ChatView: React.FC<ChatViewType> = ({
           {
             type: "say",
             content:
-              "「検索したいファイルパス」と「検索する関数の１行」と「目的」を入力してください",
+              "「検索したいファイルパス」と「検索する関数の１行目」と「目的」を入力してください",
             time: Date.now(),
           },
           {
@@ -289,7 +289,7 @@ const ChatView: React.FC<ChatViewType> = ({
                 {
                   type: "say",
                   content:
-                    "「検索したいファイルパス」と「検索する関数の１行」と「目的」を入力してください",
+                    "「検索したいファイルパス」と「検索する関数の１行目」と「目的」を入力してください",
                   time: Date.now(),
                 },
                 {

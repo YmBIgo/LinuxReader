@@ -12,7 +12,7 @@ function App() {
   const [messages, setMessages] = useState<Message[]>([
     {
       type: "say",
-      content: "「検索したいファイルパス」と「検索する関数の１行」と「目的」を入力してください",
+      content: "「検索したいファイルパス」と「検索する関数の１行目」と「目的」を入力してください",
       time: Date.now()
     },
     {

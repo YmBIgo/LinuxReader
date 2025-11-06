@@ -4,9 +4,13 @@ All notable changes to the "linux-reader" extension will be documented in this f
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## 1.0.17
+
+- 文言修正と初期入力時のバグ修正
+
 ## 1.0.16
 
-- #defineのバグ対応
+- \#defineのバグ対応
 
 ## 1.0.15
 

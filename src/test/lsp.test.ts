@@ -8,6 +8,7 @@ import memory_content from "./stub/lsp/memory_content.json";
 import mmap_content from "./stub/lsp/mmap_content.json";
 import elf_content from "./stub/lsp/elf_h_content.json";
 import pgtable_content from "./stub/lsp/pgtable_h_content.json"
+import binfmt_content from "./stub/lsp/binfmt_elf_content.json"
 import path from "path";
 
 // please edit pathToYourDirectory when you want to test it.
@@ -121,4 +122,21 @@ suite('Extension LSP', () => {
             assert.strictEqual(currentFileContent.character, character);
         }
     });
+    // binfmt_elf.c
+    test('getFileLineAndCharacterFromFunctionName binfmt_elf.c', async() => {
+        const stubFilePath = path.resolve(pathToYourDirectory, "src", "test", "stub", "lsp", "binfmt_elf.c");
+        for (let i = 0; i < binfmt_content.length; i++) {
+            const currentFileContent = binfmt_content[i];
+            // 入力時のみ考慮なので、１行目にしている。
+            const [line, character] = await getFileLineAndCharacterFromFunctionName(
+                stubFilePath,
+                currentFileContent.firstLine,
+                currentFileContent.firstLine,
+                true,
+                true,
+            );
+            assert.strictEqual(currentFileContent.line, line);
+            assert.strictEqual(currentFileContent.character, character);
+        }
+    })
 });

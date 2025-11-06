@@ -138,6 +138,9 @@ export async function getFileLineAndCharacterFromFunctionName(
   for (let i in fileContentArray) {
     let index = isNaN(Number(i)) ? -1 : Number(i);
     const row = fileContentArray[index];
+    if (row.endsWith(";") && isFirst) {
+      continue;
+    }
     if (row.replace(/\s\t/g, "").startsWith("//")) {
       continue;
     }
