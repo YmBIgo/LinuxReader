@@ -712,7 +712,13 @@ ${stepActions}
     let functionResult = functionCodeContent;
     let filePath = originalFilePath;
     if (!functionCodeContent) {
-      const [line, character] = await getFileLineAndCharacterFromFunctionName(originalFilePath, functionCodeLine, functionName, false);
+      const [line, character] = await getFileLineAndCharacterFromFunctionName(
+        originalFilePath,
+        functionCodeLine,
+        functionName,
+        false,
+        true
+      );
       if (line === -1 && character === -1) {
         this.sendErrorSocket(
           `Can not find function of selected search history. ${historyHash}`
