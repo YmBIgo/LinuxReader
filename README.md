@@ -1,7 +1,12 @@
 ## Linux Reader とは？
 Linux Reader とは、LLMと一緒にLinuxのコードを読むためのツールです。
 
-[\[LinuxReaderデモ\](https://youtu.be/jT_mHFuKsdQ)](https://youtu.be/jT_mHFuKsdQ)
+#### Important Update
+
+生成したJSONを可視化できる Playgroundを作成しました。
+よかったら使ってみて下さい！
+
+https://d1bn7mo12i1l5l.cloudfront.net/input
 
 :::note alert
 BuiltinでないC/C++のVSCode拡張とは共存できません。
@@ -146,3 +151,7 @@ History検索関連のバグ修正とHistoryでの単体テストの導入
 ### 1.0.18
 
 履歴検索時の検索範囲の拡大
+
+### 1.0.19
+
+OpenAIのモデル追加と告知
